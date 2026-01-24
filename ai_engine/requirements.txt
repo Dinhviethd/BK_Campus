@@ -1,0 +1,9 @@
+torch 
+torchvision
+# Utils
+fastapi 
+uvicorn[standard] 
+python-dotenv 
+pydantic-settings
+onnxruntime
+sentence-transformers
