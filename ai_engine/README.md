@@ -40,12 +40,14 @@ data = {
 
 ## 4. Core2_Matching:
 - So khớp giữa bài post "lost" và "found": Dùng mô hình OpenAI CLIP (phiên bản multilingual) để embedding "content", "ảnh" của post, từ đó dùng Semantic Search (Cosine Simularity) để tìm các bài tìm chủ của đồ khớp với 1 bài tìm đồ đó (có threshold nhất định).
+- Embedding ra 2 vector: vector của ảnh, vector của content.
 - Công thức để tính score tương đồng dựa theo trọng số khi so khớp tương ứng nội dung và ảnh của 2 bài:
 Score = w1.Sim(Img, Img) + w2.Sim(Text, Img) + w3.KeywordMatch
 - Có thể lưu các vector đã embed được vào VectorDB hoặc SQLDB để tránh embed lại.
 - Input cho model: content: str, image_url : str 
 - Output của thuật toán: probability:float của 2 bài được so sánh.
-Với mỗi bài tìm đồ (Khóa ngoại) -> Có 1 bảng gồm thuộc tính của các tìm chủ đã được tính độ tương đồng + thêm thuộc tính "probability"
+Với mỗi bài tìm đồ (Khóa ngoại) -> Có 1 bảng gồm thuộc tính của các tìm chủ đã được tính độ tương đồng + thêm thuộc tính "probability".
+
 
 data = {
     id int [foreign key] -> Key of "lost"
