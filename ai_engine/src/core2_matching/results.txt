@@ -1,0 +1,35 @@
+--- TEST TEXT EMBEDDING ---
+Original: Một chú mèo dễ thương đang ngồi trên ghế sofa. -> Translated: A cute cat is sitting on the sofa.
+Độ dài vector text: 512
+5 giá trị đầu: [0.026299946010112762, -0.04385841637849808, -0.04260252043604851, -0.045507289469242096, -0.0012412811629474163]
+
+--- TEST IMAGE EMBEDDING ---
+Độ dài vector image: 512
+5 giá trị đầu: [0.02433593012392521, 0.0037027818616479635, -0.020449094474315643, -0.02376958169043064, 0.005209079943597317]
+
+Cosine Similarity: 0.2713
+=> Kết luận: Ảnh và Text có nội dung liên quan.
+
+--- TEST TEXT EMBEDDING ---
+Original: Một chú mèo dễ thương đang ngồi trên ghế sofa. -> Translated: A cute cat is sitting on the sofa.
+Độ dài vector text: 512
+5 giá trị đầu: [0.026299946010112762, -0.04385841637849808, -0.04260252043604851, -0.045507289469242096, -0.0012412811629474163]
+
+--- TEST IMAGE EMBEDDING ---
+Độ dài vector image: 512
+5 giá trị đầu: [0.00839517917484045, -0.0012147474335506558, -0.022442428395152092, 0.019056709483265877, 0.010328013449907303]
+
+Cosine Similarity: 0.1531
+=> Kết luận: Ít liên quan.
+
+--- TEST TEXT EMBEDDING ---
+Original: Có bạn nào thấy mặt dây chuyền hình như thế này ở trường không ạ . Ai nhặt được cho mình xin lại với ạ ,do đó là đồ quang trọng của mình nên bạn nào nhặt đc liên hệ vs mik nha -> Translated: Have any of you seen a picture pendant like this at school? If anyone found it, please give it back to me. It's my important item, so if anyone found it, please contact me.
+Độ dài vector text: 512
+5 giá trị đầu: [-0.03305751085281372, 0.04726360738277435, -0.01833355240523815, 0.010182625614106655, -0.001151956501416862]
+
+--- TEST IMAGE EMBEDDING ---
+Độ dài vector image: 512
+5 giá trị đầu: [-0.019085079431533813, -0.010467364452779293, 0.05569184944033623, -0.021785978227853775, -0.02914590574800968]
+
+Cosine Similarity: 0.2873
+=> Kết luận: Ảnh và Text có nội dung liên quan.

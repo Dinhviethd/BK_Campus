@@ -1,0 +1,35 @@
+ai_engine/
+├── .venv/                   # Môi trường ảo do uv tạo
+├── data/                    # (GitIgnore) Chứa dữ liệu thô/đã xử lý
+│   ├── raw/                 # Ảnh, text cào về để train
+│   └── processed/           # Dữ liệu đã gán nhãn, resize, clean
+├── models/                  # (GitIgnore) Chứa file weights (.pt, .onnx)
+│   ├── core1_filter/        # Weights cho PhoBERT, EfficientNet
+│   └── core2_match/         # Weights cho CLIP/SigLIP
+├── notebooks/               # Jupyter notebooks để EDA, thử nghiệm model
+│   ├── 01_data_analysis.ipynb
+│   └── 02_train_experiment.ipynb
+├── src/                     # SOURCE CODE CHÍNH
+│   ├── __init__.py
+│   ├── config.py            # Quản lý cấu hình (Load biến môi trường, params)
+│   ├── core1_filtering/     # MODULE LÕI 1 (Phân loại)
+│   │   ├── __init__.py
+│   │   ├── dataset.py       # Custom Dataset/Dataloader
+│   │   ├── model_fusion.py  # Code ghép PhoBERT + EfficientNet
+│   │   ├── preprocess.py    # Hàm xử lý text (VietOCR) & ảnh
+│   │   └── train.py         # Script huấn luyện
+│   ├── core2_matching/      # MODULE LÕI 2 (Embedding/Search)
+│   │   ├── __init__.py
+│   │   ├── clip_wrapper.py  # Wrapper gọi CLIP (Trans + Encode)
+│   │   ├── onnx_utils.py    # Code convert/quantize model sang ONNX (chuyên môn của bạn)
+│   │   └── translator.py    # Module dịch Việt -> Anh (nếu dùng CLIP gốc)
+│   └── services/            # API/Worker để giao tiếp với bên ngoài
+│       ├── __init__.py
+│       ├── inference.py     # Class chính gộp Core 1 & 2 để dự đoán
+│       └── main.py          # FastAPI wrapper (nếu chạy AI như microservice)
+├── tests/                   # Unit tests
+├── .dockerignore
+├── .gitignore
+├── Dockerfile               # Dùng để build AI Service
+├── pyproject.toml           # File quản lý depedency của uv
+└── uv.lock

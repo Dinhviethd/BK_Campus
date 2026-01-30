@@ -8,3 +8,8 @@ pydantic-settings
 onnxruntime
 sentence-transformers
 playwright
+pandas
+numpy
+requests
+pillow
+pickle

@@ -51,7 +51,7 @@ class MultilingualCLIPEmbedder:
                 image = self._load_image_from_url(input_data)
                 if image:
                     # Model tự động xử lý resize/crop ảnh
-                    embedding = self.model.encode(image)
+                    embedding = self.model.encode([image])
                     return embedding
                 else:
                     return None

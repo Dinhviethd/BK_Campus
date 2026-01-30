@@ -1,0 +1,38 @@
+# Python-generated files
+/ai-engine/src/ml_prefiltering/__pycache__/
+/ai-engine/*.py[oc]
+/ai-engine/build/
+/ai-engine/dist/
+/ai-engine/wheels/
+/ai-engine/*.egg-info
+
+# Virtual environments
+/ai-engine/.venv
+/ai-engine/*.pyc
+/ai-engine/.env
+/ai-engine/README.md
+/ai-engine/pyproject.toml
+/ai-engine/requirements.txt
+/ai-engine/.python-version
+/ai-engine/uv.lock
+/ai-engine/data/
+/business_analysis.txt
+/ai-engine/src/data/
+/ai-engine/src/images/
+/note.txt
+/ai-engine/src/checkpoints/
+
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.jpg
+*.png
+*.csv
+*.xlsx
+*.pth
+*.pkl
