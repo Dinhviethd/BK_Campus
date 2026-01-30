@@ -36,8 +36,8 @@ class_0_data = df[df['Label'] == 0]
 other_classes_data = df[df['Label'] != 0]
 
 # 2. Lấy ngẫu nhiên 40 mẫu từ Class 0
-if len(class_0_data) >= 300:
-    class_0_downsampled = class_0_data.sample(n=300, random_state=42)
+if len(class_0_data) >= 400:
+    class_0_downsampled = class_0_data.sample(n=400, random_state=42)
 else:
     print(f"Cảnh báo: Class 0 chỉ có {len(class_0_data)} mẫu (ít hơn 40). Đang giữ nguyên.")
     class_0_downsampled = class_0_data
@@ -79,17 +79,11 @@ model.fit(x_train, y_train)
 y_predict = model.predict(x_test)
 print(classification_report(y_test, y_predict))
 
-# import pickle
-# with open('ml_model_svc.pkl', 'wb') as file:
-#     pickle.dump(model, file)
-
 import joblib
 joblib.dump(model, 'ml_model_svc.joblib')
 
-
-
-
-# vectorizer = TfidfVectorizer(ngram_range=(1, 2), min_df=1)
+# --- BENCHMARKING MODELS ---
+# vectorizer = TfidfVectorizer(tokenizer=vietnamese_tokenizer, ngram_range=(1, 2), min_df=1)
 
 # x_train = vectorizer.fit_transform(x_train)
 # x_test = vectorizer.transform(x_test)
@@ -102,22 +96,22 @@ joblib.dump(model, 'ml_model_svc.joblib')
 # # Write DataFrame to a CSV file
 # df_2.to_csv('output.csv')
 
-# 3. PHÂN TÍCH KẾT QUẢ
+# # 3. PHÂN TÍCH KẾT QUẢ
 
-# Case A: False Negative (NGUY HIỂM NHẤT)
-# Là những bài Label=1 (Quan trọng) nhưng Filter=0 (Bị xóa)
-wrongly_removed = df[(df['Label'] == 1) & (df['Label'] == 2) & (df['prefilter'] == 0)]
+# # Case A: False Negative (NGUY HIỂM NHẤT)
+# # Là những bài Label=1 (Quan trọng) nhưng Filter=0 (Bị xóa)
+# wrongly_removed = df[(df['Label'] == 1) & (df['Label'] == 2) & (df['prefilter'] == 0)]
 
-# Case B: True Negative (Lọc đúng)
-# Là những bài Label=0 (Rác) và Filter=0 (Đã xóa đúng)
-correctly_removed = df[(df['Label'] == 0) & (df['prefilter'] == 0)]
+# # Case B: True Negative (Lọc đúng)
+# # Là những bài Label=0 (Rác) và Filter=0 (Đã xóa đúng)
+# correctly_removed = df[(df['Label'] == 0) & (df['prefilter'] == 0)]
 
-# Case C: False Positive (Lọt lưới)
-# Là những bài Label=0 (Rác) nhưng Filter=1 (Vẫn giữ lại) -> Cái này model ML sau này sẽ lo
-missed_spam = df[(df['Label'] == 0) & (df['prefilter'] == 1)]
-# 4. IN BÁO CÁO
-print(f"\n=== KẾT QUẢ ĐÁNH GIÁ ===")
-print(f"1. Số bài quan trọng bị xóa nhầm (False Negative): {len(wrongly_removed)} (Cần = 0 là tốt nhất)")
-print(f"2. Số bài rác đã lọc được (True Negative): {len(correctly_removed)}")
-print(f"3. Số bài rác bị lọt lưới (False Positive): {len(missed_spam)}")
-exit(0)
+# # Case C: False Positive (Lọt lưới)
+# # Là những bài Label=0 (Rác) nhưng Filter=1 (Vẫn giữ lại) -> Cái này model ML sau này sẽ lo
+# missed_spam = df[(df['Label'] == 0) & (df['prefilter'] == 1)]
+# # 4. IN BÁO CÁO
+# print(f"\n=== KẾT QUẢ ĐÁNH GIÁ ===")
+# print(f"1. Số bài quan trọng bị xóa nhầm (False Negative): {len(wrongly_removed)} (Cần = 0 là tốt nhất)")
+# print(f"2. Số bài rác đã lọc được (True Negative): {len(correctly_removed)}")
+# print(f"3. Số bài rác bị lọt lưới (False Positive): {len(missed_spam)}")
+# exit(0)

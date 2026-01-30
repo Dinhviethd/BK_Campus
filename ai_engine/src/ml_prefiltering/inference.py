@@ -1,12 +1,12 @@
 import pickle
 import joblib
 import pandas as pd
-from underthesea import word_tokenize
 from data_reading import data_reading
 from data_preprocessing import preprocessing
 from sklearn.metrics import classification_report
 import os
 
+from underthesea import word_tokenize
 def vietnamese_tokenizer(text):
     # word_tokenize trả về list: ['Học máy', 'là', ...]
     tokens = word_tokenize(text)

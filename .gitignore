@@ -12,16 +12,12 @@
 /ai-engine/.env
 /ai-engine/README.md
 /ai-engine/pyproject.toml
-/ai-engine/requirements.txt
 /ai-engine/.python-version
 /ai-engine/uv.lock
 /ai-engine/data/
-/business_analysis.txt
 /ai-engine/src/data/
 /ai-engine/src/images/
-/note.txt
 /ai-engine/src/checkpoints/
-
 
 # OS junk files
 .DS_Store
@@ -36,3 +32,9 @@ Thumbs.db
 *.xlsx
 *.pth
 *.pkl
+*.joblib
+*.json
+*.txt
+*.env
+*.html
+*.pyc
