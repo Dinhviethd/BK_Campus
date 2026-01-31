@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { OTPForm } from "./OTPForm"
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/service/authService"
+import { authService } from "@/services/authService"
 import { toast } from "sonner"
 
 type Step = "email" | "otp" | "reset"

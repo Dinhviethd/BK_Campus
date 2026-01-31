@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { useAuth } from '../store/authStore'
+import { useAuth } from '../stores/authStore'
 
 const api = axios.create({
     baseURL:  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',

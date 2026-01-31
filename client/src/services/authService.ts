@@ -1,5 +1,5 @@
 import api from './api';
-import { useAuth, type User } from '../store/authStore';
+import { useAuth, type User } from '../stores/authStore';
 
 export interface LoginRequest {
   email: string;

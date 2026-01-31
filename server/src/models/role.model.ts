@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, ManyToMany, Column, JoinTable } from 'typeorm';
 import { Permission } from './permission.model';
-import { RoleScope } from '../constants/constants';
 @Entity('roles')
 export class Role {
   @PrimaryGeneratedColumn()
@@ -8,9 +7,6 @@ export class Role {
 
   @Column()
   name!: string; // workspace_admin, board_editor...
-
-  @Column()
-  scope!: RoleScope; 
 
   @Column({ nullable: true })
   description?: string;

@@ -1,7 +1,6 @@
 import { AppDataSource } from '@/configs/database.config';
 import { Role } from '@/models/role.model';
 import { Permission } from '@/models/permission.model';
-import { RoleScope } from '@/constants/constants';
 
 const PERMISSIONS = {
   // Workspace permissions
@@ -111,7 +110,6 @@ export async function seedRoles() {
   const roles = [
     {
       name: 'workspace_admin',
-      scope: RoleScope.WORKSPACE,
       description: 'Admin của workspace, có toàn quyền quản lý',
       permissions: getPermissionsByCode([
         PERMISSIONS.WORKSPACE_VIEW,
@@ -128,7 +126,6 @@ export async function seedRoles() {
     },
     {
       name: 'workspace_member',
-      scope: RoleScope.WORKSPACE,
       description: 'Thành viên workspace, có quyền xem và tham gia',
       permissions: getPermissionsByCode([
         PERMISSIONS.WORKSPACE_VIEW,
@@ -138,7 +135,6 @@ export async function seedRoles() {
     },
     {
       name: 'board_admin',
-      scope: RoleScope.BOARD,
       description: 'Admin của board, có toàn quyền quản lý board',
       permissions: getPermissionsByCode([
         PERMISSIONS.BOARD_VIEW,
@@ -163,7 +159,6 @@ export async function seedRoles() {
     },
     {
       name: 'board_member',
-      scope: RoleScope.BOARD,
       description: 'Thành viên board, có quyền xem và chỉnh sửa',
       permissions: getPermissionsByCode([
         PERMISSIONS.BOARD_VIEW,
@@ -182,7 +177,6 @@ export async function seedRoles() {
     },
     {
       name: 'board_viewer',
-      scope: RoleScope.BOARD,
       description: 'Người xem board, chỉ có quyền xem',
       permissions: getPermissionsByCode([
         PERMISSIONS.BOARD_VIEW,

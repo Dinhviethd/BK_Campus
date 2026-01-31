@@ -1,15 +1,12 @@
 
 import {App} from "./App";
-import AuthLayout from "@/layout/AuthLayout";
+import AuthLayout from "@/components/layouts/AuthLayout";
 import { LoginForm } from "@/components/auth/Login"
 import {SignupForm} from '@/components/auth/Register'
 import ResetPassword from '@/components/auth/ResetPassword'
-import MainLayout from '@/layout/MainLayout'
+import MainLayout from '@/components/layouts/MainLayout'
 import {MainPage} from '@/components/MainPage'
 import { ProtectedRoute, PublicRoute } from '@/components/auth/ProtectedRoute'
-import { CreateWorkspace } from '@/components/workspace/CreateWorkspace'
-import { WorkspaceDetail } from '@/components/workspace/WorkspaceDetail'
-import { BoardDetail } from '@/components/board/BoardDetail'
 
 const routes = [
   {
@@ -18,22 +15,19 @@ const routes = [
     children: [
       {
         path: "/",
-        Component: ProtectedRoute, // Bảo vệ các route cần đăng nhập
+        Component: ProtectedRoute, 
         children: [
           {
             Component: MainLayout,
             children: [
               { path: "", Component: MainPage },
-              { path: "workspace/create", Component: CreateWorkspace },
-              { path: "workspace/:id", Component: WorkspaceDetail },
-              { path: "board/:id", Component: BoardDetail },
             ],
           },
         ],
       },
       {
         path: "auth",
-        Component: PublicRoute, // Chỉ cho phép truy cập khi chưa đăng nhập
+        Component: PublicRoute, 
         children: [
           {
             Component: AuthLayout,

@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/service/authService"
+import { authService } from "@/services/authService"
 import { toast } from "sonner"
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
