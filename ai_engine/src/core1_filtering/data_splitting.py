@@ -69,8 +69,8 @@ def prepare_data():
     other_classes_data = df[df['Label'] != 0]
 
     # 2. Lấy ngẫu nhiên 40 mẫu từ Class 0
-    if len(class_0_data) >= 120:
-        class_0_downsampled = class_0_data.sample(n=120, random_state=42)
+    if len(class_0_data) >= 220:
+        class_0_downsampled = class_0_data.sample(n=220, random_state=42)
     else:
         print(f"Cảnh báo: Class 0 chỉ có {len(class_0_data)} mẫu (ít hơn 40). Đang giữ nguyên.")
         class_0_downsampled = class_0_data

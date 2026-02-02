@@ -25,11 +25,14 @@ combined_rows_df = data_reading(data_dir, file_names)
 # Data Preprocessing
 df = preprocessing(combined_rows_df)
 # Data Converting to inference
-df['Label'] = df['Label'].replace(2, 1)
+# df['Label'] = df['Label'].replace(2, 1)
 
 x = df["content"]
 y = df["Label"]
+# x = ["cần tìm hộp bút như hình ạ", "tìm được hộp bút ở phòng F103, liên hệ phòng nước để lấy lại nha"]
 y_predict = model.predict(x)
+print(y_predict)
+# exit(0)
 
 print(classification_report(y, y_predict))
 print("--Actual--")

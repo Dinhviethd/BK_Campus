@@ -8,7 +8,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.metrics import classification_report
-from underthesea import word_tokenize
+from utils import vietnamese_tokenizer
 import os
 
 data_dir = "C:/Contests_2025/AIReFound/ai_engine/data"
@@ -26,9 +26,9 @@ df = preprocessing(combined_rows_df)
 # exit(0)
 
 # Data Converting to training for ML
-df['Label'] = df['Label'].replace(2, 1)
-print("--- Sau khi lọc rule based ---")
-print(df['Label'].value_counts())
+# df['Label'] = df['Label'].replace(2, 1)
+# print("--- Sau khi lọc rule based ---")
+# print(df['Label'].value_counts())
 
 # Balancing data
 # 1. Tách dữ liệu thành 2 phần: Class 0 và Các class còn lại
@@ -63,11 +63,6 @@ x_train, x_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-def vietnamese_tokenizer(text):
-    # word_tokenize trả về list: ['Học máy', 'là', ...]
-    tokens = word_tokenize(text)
-    return tokens
-
 model = Pipeline(steps=[
     ("vectorizer",  TfidfVectorizer(tokenizer=vietnamese_tokenizer, ngram_range=(1, 2), min_df=1)),
     # ("scaler", StandardScaler()),
@@ -82,7 +77,7 @@ print(classification_report(y_test, y_predict))
 import joblib
 joblib.dump(model, 'ml_model_svc.joblib')
 
-# --- BENCHMARKING MODELS ---
+# # --- BENCHMARKING MODELS ---
 # vectorizer = TfidfVectorizer(tokenizer=vietnamese_tokenizer, ngram_range=(1, 2), min_df=1)
 
 # x_train = vectorizer.fit_transform(x_train)

@@ -52,11 +52,11 @@ except ImportError:
 FB_EMAIL = "huy11072k6@gmail.com"
 FB_PASS = "huy12012005"
 # GROUP_ID = "udnvku"
-GROUP_ID = "sinhviendaihocngoaingudanang"
+GROUP_ID = "ued.confessions"
 BASE_URL = f"https://m.facebook.com/groups/{GROUP_ID}"
 STATE = "fb_state_mbasic.json"
-OUTPUT_FILE = "daihocngoaingudn_CLEAN.csv" # File kết quả sạch
-TRASH_FILE = "daihocngoaingudn_TRASH.csv"   # File rác (để kiểm tra xem model có lọc nhầm không)
+OUTPUT_FILE = "UED_002_CLEAN.csv" # File kết quả sạch
+TRASH_FILE = "UED_002_TRASH.csv"   # File rác (để kiểm tra xem model có lọc nhầm không)
 MODEL_PATH = 'ml_model_svc.joblib'
 NUM_POSTS_TO_SCRAPE = 1200
 USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Mobile/15E148 Safari/604.1"

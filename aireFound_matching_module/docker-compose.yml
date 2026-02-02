@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Redis - Message Broker cho Celery
+  redis:
+    image: redis:7-alpine
+    container_name: aireFound_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Celery Worker
+  celery_worker:
+    build: .
+    container_name: aireFound_worker
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=info -Q matching --concurrency=4
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # FastAPI Application
+  api:
+    build: .
+    container_name: aireFound_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # Flower - Celery Monitoring (Optional)
+  flower:
+    build: .
+    container_name: aireFound_flower
+    command: celery -A app.core.celery_app:celery_app flower --port=5555
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  default:
+    name: aireFound_network
