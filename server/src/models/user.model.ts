@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Notification } from './notification.model';
+import {Role} from './role.model'
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  idUser!: number;
+  @PrimaryGeneratedColumn('uuid') 
+  idUser!: string;
 
   @Column()
   name!: string;
@@ -34,4 +35,8 @@ export class User {
 
   @OneToMany(() => Notification, n => n.user)
   notifications!: Notification[];
+
+  @ManyToOne(() => Role, role => role.users)
+  @JoinColumn({ name: 'roleId' })
+  role!: Role;
 }

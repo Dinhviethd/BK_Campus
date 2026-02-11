@@ -48,3 +48,5 @@ EXPOSE 8080
 
 # Chạy server
 CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
+
+

@@ -10,23 +10,18 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/stores/authStore"
+import { authService } from "@/services/authService"
+import { useNavigate } from "react-router-dom"
 
 // Simple logo component for the navbar
 const Logo = (props: React.SVGAttributes<SVGElement>) => {
   return (
-    <svg
-      aria-label="Logo"
-      role="img"
-      fill="none"
-      height="1em"
-      viewBox="0 0 324 323"
-      width="1em"
-      xmlns="http://www.w3.org/2000/svg"
-      {...(props as any)}
-    >
-      <rect fill="currentColor" height="323" rx="161.5" width="323" x="0.5" />
-      <circle cx="162" cy="161.5" fill="white" r="60" className="dark:fill-black" />
-    </svg>
+  <img 
+      src="/logo.png" 
+      alt="Logo" 
+      className="h-10 w-auto object-contain" 
+    />
   )
 }
 
@@ -97,9 +92,9 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
       logoHref = "#",
       navigationLinks = defaultNavigationLinks,
       signInText = "Sign In",
-      signInHref = "#signin",
-      ctaText = "Get Started",
-      ctaHref = "#get-started",
+      signInHref = "/auth/login",
+      ctaText = "Sign Up",
+      ctaHref = "/auth/register",
       onSignInClick,
       onCtaClick,
       ...props
@@ -108,6 +103,8 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
   ) => {
     const [isMobile, setIsMobile] = useState(false)
     const containerRef = useRef<HTMLElement>(null)
+    const { user, isAuthenticated, clearAuth } = useAuth()
+    const navigate = useNavigate()
 
     useEffect(() => {
       const checkWidth = () => {
@@ -191,14 +188,14 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               </Popover>
             )}
             {/* Main nav */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 ">
               <button
                 type="button"
-                className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer"
+                className="flex items-center text-primary hover:text-primary/90 transition-colors cursor-pointer"
                 onClick={e => e.preventDefault()}
               >
-                <div className="text-2xl">{logo}</div>
-                <span className="hidden font-bold text-xl sm:inline-block">AIRefound</span>
+                <div>{logo}</div>
+               <span className="hidden font-bold text-2xl sm:inline-block text-[#0D2E54]">AIRefound</span>
               </button>
               {/* Navigation menu */}
               {!isMobile && (
@@ -227,31 +224,88 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
           </div>
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <Button
-              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-              onClick={e => {
-                e.preventDefault()
-                if (onSignInClick) {
-                  onSignInClick()
-                }
-              }}
-              size="sm"
-              variant="ghost"
-            >
-              {signInText}
-            </Button>
-            <Button
-              className="text-sm font-medium px-4 h-9 rounded-md shadow-sm"
-              onClick={e => {
-                e.preventDefault()
-                if (onCtaClick) {
-                  onCtaClick()
-                }
-              }}
-              size="sm"
-            >
-              {ctaText}
-            </Button>
+            {isAuthenticated && user ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-2 rounded-full px-2 py-1 hover:bg-accent transition-colors cursor-pointer"
+                  >
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={user.name}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                        {user.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="hidden text-sm font-medium text-foreground sm:inline-block">
+                      {user.name}
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-48 p-2">
+                  <div className="flex flex-col gap-1">
+                    <div className="px-3 py-2 text-sm font-medium text-foreground">
+                      {user.name}
+                    </div>
+                    <div className="px-3 pb-2 text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </div>
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      type="button"
+                      className="flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                      onClick={async () => {
+                        try {
+                          await authService.logout()
+                        } catch {
+                          clearAuth()
+                        }
+                        navigate('/auth/login')
+                      }}
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <>
+                <Button
+                  className="text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (onSignInClick) {
+                      onSignInClick()
+                    } else {
+                      navigate(signInHref)
+                    }
+                  }}
+                  size="sm"
+                  variant="ghost"
+                >
+                  {signInText}
+                </Button>
+                <Button
+                  className="text-sm font-medium px-4 h-9 rounded-md shadow-sm"
+                  onClick={e => {
+                    e.preventDefault()
+                    if (onCtaClick) {
+                      onCtaClick()
+                    } else {
+                      navigate(ctaHref)
+                    }
+                  }}
+                  size="sm"
+                >
+                  {ctaText}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>

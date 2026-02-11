@@ -15,7 +15,7 @@ const routes = [
     children: [
       {
         path: "/",
-        Component: ProtectedRoute, 
+        // Component: ProtectedRoute, 
         children: [
           {
             Component: MainLayout,
@@ -27,7 +27,7 @@ const routes = [
       },
       {
         path: "auth",
-        Component: PublicRoute, 
+        // Component: PublicRoute, 
         children: [
           {
             Component: AuthLayout,

@@ -62,7 +62,7 @@ export function LoginForm({
         <CardHeader>
           <CardTitle>Đăng nhập tài khoản</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Nhập email của bạn để đăng nhập vào tài khoản
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,7 +73,6 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="abc@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -87,7 +86,7 @@ export function LoginForm({
                     to="/auth/reset-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot password?
+                    Quên mật khẩu?
                   </Link>
                 </div>
                 <Input 
@@ -103,13 +102,10 @@ export function LoginForm({
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? "Logging in..." : "Login"}
                 </Button>
-                <Button variant="outline" type="button" className="w-full">
-                  Login with Google
-                </Button>
                 <FieldDescription className="text-center">
-                  Don't have an account?{" "}
+                  Không có tài khoản?{" "}
                   <Link to="/auth/register" className="underline">
-                    Register
+                    Đăng ký
                   </Link>
                 </FieldDescription>
               </Field>

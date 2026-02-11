@@ -64,20 +64,19 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>Create Account</CardTitle>
+        <CardTitle>Tạo tài khoản</CardTitle>
         <CardDescription>
-          Enter your information to create a new account
+          Nhập thông tin của bạn để tạo tài khoản mới
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit}>
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="name">Full Name</FieldLabel>
+              <FieldLabel htmlFor="name">Họ và tên</FieldLabel>
               <Input 
                 id="name" 
                 type="text" 
-                placeholder="John Doe" 
                 value={formData.name}
                 onChange={handleChange}
                 required 
@@ -89,29 +88,24 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
                 disabled={loading}
               />
-              <FieldDescription>
-                We will use this email to contact you.
-              </FieldDescription>
             </Field>
             <Field>
-              <FieldLabel htmlFor="phone">Phone Number (optional)</FieldLabel>
+              <FieldLabel htmlFor="phone">Số điện thoại (tùy chọn)</FieldLabel>
               <Input 
                 id="phone" 
                 type="tel" 
-                placeholder="0901234567"
                 value={formData.phone}
                 onChange={handleChange}
                 disabled={loading}
               />
             </Field>
             <Field>
-              <FieldLabel htmlFor="password">Password</FieldLabel>
+              <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
               <Input 
                 id="password" 
                 type="password" 
@@ -121,12 +115,12 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 disabled={loading}
               />
               <FieldDescription>
-                At least 6 characters, including uppercase, lowercase, and numbers.
+                Ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số.
               </FieldDescription>
             </Field>
             <Field>
               <FieldLabel htmlFor="confirmPassword">
-                Confirm Password
+                Xác nhận mật khẩu
               </FieldLabel>
               <Input 
                 id="confirmPassword" 
@@ -140,15 +134,12 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
             <FieldGroup>
               <Field>
                 <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? "Creating account..." : "Create Account"}
-                </Button>
-                <Button variant="outline" type="button" className="w-full">
-                  Register with Google
+                  {loading ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
                 </Button>
                 <FieldDescription className="px-6 text-center">
-                  Already have an account?{" "}
+                  Đã có tài khoản?{" "}
                   <Link to="/auth/login" className="underline">
-                    Login
+                    Đăng nhập
                   </Link>
                 </FieldDescription>
               </Field>

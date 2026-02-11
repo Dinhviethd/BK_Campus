@@ -1,197 +1,94 @@
 import { AppDataSource } from '@/configs/database.config';
+import { Permission } from '@/models/permission.model'; // Hãy sửa đường dẫn đúng với cấu trúc folder của bạn
 import { Role } from '@/models/role.model';
-import { Permission } from '@/models/permission.model';
+import { In } from 'typeorm';
 
-const PERMISSIONS = {
-  // Workspace permissions
-  WORKSPACE_VIEW: 'workspace:view',
-  WORKSPACE_EDIT: 'workspace:edit',
-  WORKSPACE_DELETE: 'workspace:delete',
-  WORKSPACE_INVITE: 'workspace:invite',
-  WORKSPACE_REMOVE_MEMBER: 'workspace:remove_member',
+// 1. Định nghĩa danh sách các Quyền (Permissions) dựa trên nghiệp vụ
+const PERMISSIONS_DATA = [
+  // --- Quản lý Bài viết (Mất đồ & Nhặt được) ---
+  { code: 'POST_CREATE', description: 'Được phép đăng bài viết mới (Mất/Nhặt)' },
+  { code: 'POST_READ', description: 'Xem danh sách và chi tiết bài viết' },
+  { code: 'POST_UPDATE_OWN', description: 'Chỉnh sửa bài viết của chính mình' },
+  { code: 'POST_DELETE_OWN', description: 'Xóa bài viết của chính mình' },
   
-  // Board permissions
-  BOARD_CREATE: 'board:create',
-  BOARD_VIEW: 'board:view',
-  BOARD_EDIT: 'board:edit',
-  BOARD_DELETE: 'board:delete',
-  BOARD_INVITE: 'board:invite',
+  // --- Quản lý Bình luận ---
+  { code: 'COMMENT_CREATE', description: 'Bình luận vào bài viết' },
+  { code: 'COMMENT_READ', description: 'Xem bình luận' },
+  { code: 'COMMENT_DELETE_OWN', description: 'Xóa bình luận của chính mình' },
+
+  // --- Chức năng "Chuông" (AI Matching) ---
+  { code: 'MATCH_REQUEST', description: 'Kích hoạt chức năng chuông để AI so khớp' },
+  // Lưu ý: Việc chặn đăng bài khi đang matching sẽ được xử lý ở logic code (Service), 
+  // không phải ở database seed.
+
+  // --- Quyền Admin (Quản trị viên) ---
+  { code: 'USER_MANAGE', description: 'Quản lý người dùng (Ban/Unban)' },
+  { code: 'CONTENT_DELETE_ANY', description: 'Xóa bất kỳ bài viết/bình luận nào vi phạm' },
+  { code: 'DASHBOARD_ACCESS', description: 'Truy cập trang quản trị' },
+];
+
+// 2. Hàm Seed Permissions
+export const seedPermissions = async () => {
+  const permissionRepo = AppDataSource.getRepository(Permission);
+
+  console.log('...Seeding Permissions');
   
-  // List permissions
-  LIST_CREATE: 'list:create',
-  LIST_EDIT: 'list:edit',
-  LIST_DELETE: 'list:delete',
-  LIST_MOVE: 'list:move',
-  
-  // Card permissions
-  CARD_CREATE: 'card:create',
-  CARD_VIEW: 'card:view',
-  CARD_EDIT: 'card:edit',
-  CARD_DELETE: 'card:delete',
-  CARD_MOVE: 'card:move',
-  CARD_ASSIGN: 'card:assign',
-  
-  // Comment permissions
-  COMMENT_CREATE: 'comment:create',
-  COMMENT_EDIT_OWN: 'comment:edit_own',
-  COMMENT_DELETE_OWN: 'comment:delete_own',
-  COMMENT_DELETE_ANY: 'comment:delete_any',
+  for (const p of PERMISSIONS_DATA) {
+    // Kiểm tra xem permission đã tồn tại chưa bằng code
+    const exists = await permissionRepo.findOneBy({ code: p.code });
+    
+    if (!exists) {
+      const newPerm = permissionRepo.create(p);
+      await permissionRepo.save(newPerm);
+    }
+  }
 };
 
-export async function seedPermissions() {
-  const permissionRepository = AppDataSource.getRepository(Permission);
+// 3. Hàm Seed Roles
+export const seedRoles = async () => {
+  const roleRepo = AppDataSource.getRepository(Role);
+  const permissionRepo = AppDataSource.getRepository(Permission);
 
-  const existingPermissions = await permissionRepository.count();
-  if (existingPermissions > 0) {
-    console.log('Permissions already exist, skipping seed...');
-    return;
+  console.log('...Seeding Roles');
+
+  // Lấy tất cả permission vừa tạo từ DB ra để gán
+  const allPermissions = await permissionRepo.find();
+
+  // --- Định nghĩa Role: USER (Người dùng thường) ---
+  // User có quyền đăng bài, bình luận và dùng chuông.
+  // Không có quyền Admin.
+  const userPermissions = allPermissions.filter(p => 
+    [
+      'POST_CREATE', 'POST_READ', 'POST_UPDATE_OWN', 'POST_DELETE_OWN',
+      'COMMENT_CREATE', 'COMMENT_READ', 'COMMENT_DELETE_OWN',
+      'MATCH_REQUEST'
+    ].includes(p.code)
+  );
+
+  const userRole = await roleRepo.findOneBy({ name: 'USER' });
+  if (!userRole) {
+    await roleRepo.save(roleRepo.create({
+      name: 'USER',
+      description: 'Người dùng mặc định, có thể đăng tin và dùng AI matching',
+      permissions: userPermissions
+    }));
+  } else {
+    // Nếu role đã tồn tại, update lại permission mới nhất (đề phòng có thay đổi)
+    userRole.permissions = userPermissions;
+    await roleRepo.save(userRole);
   }
 
-  const permissionsData = [
-    // Workspace permissions
-    { code: PERMISSIONS.WORKSPACE_VIEW, description: 'Xem workspace' },
-    { code: PERMISSIONS.WORKSPACE_EDIT, description: 'Chỉnh sửa workspace' },
-    { code: PERMISSIONS.WORKSPACE_DELETE, description: 'Xóa workspace' },
-    { code: PERMISSIONS.WORKSPACE_INVITE, description: 'Mời thành viên vào workspace' },
-    { code: PERMISSIONS.WORKSPACE_REMOVE_MEMBER, description: 'Xóa thành viên khỏi workspace' },
-    
-    // Board permissions
-    { code: PERMISSIONS.BOARD_CREATE, description: 'Tạo board mới' },
-    { code: PERMISSIONS.BOARD_VIEW, description: 'Xem board' },
-    { code: PERMISSIONS.BOARD_EDIT, description: 'Chỉnh sửa board' },
-    { code: PERMISSIONS.BOARD_DELETE, description: 'Xóa board' },
-    { code: PERMISSIONS.BOARD_INVITE, description: 'Mời thành viên vào board' },
-    
-    // List permissions
-    { code: PERMISSIONS.LIST_CREATE, description: 'Tạo list mới' },
-    { code: PERMISSIONS.LIST_EDIT, description: 'Chỉnh sửa list' },
-    { code: PERMISSIONS.LIST_DELETE, description: 'Xóa list' },
-    { code: PERMISSIONS.LIST_MOVE, description: 'Di chuyển list' },
-    
-    // Card permissions
-    { code: PERMISSIONS.CARD_CREATE, description: 'Tạo card mới' },
-    { code: PERMISSIONS.CARD_VIEW, description: 'Xem card' },
-    { code: PERMISSIONS.CARD_EDIT, description: 'Chỉnh sửa card' },
-    { code: PERMISSIONS.CARD_DELETE, description: 'Xóa card' },
-    { code: PERMISSIONS.CARD_MOVE, description: 'Di chuyển card' },
-    { code: PERMISSIONS.CARD_ASSIGN, description: 'Gán thành viên vào card' },
-    
-    // Comment permissions
-    { code: PERMISSIONS.COMMENT_CREATE, description: 'Tạo comment' },
-    { code: PERMISSIONS.COMMENT_EDIT_OWN, description: 'Chỉnh sửa comment của mình' },
-    { code: PERMISSIONS.COMMENT_DELETE_OWN, description: 'Xóa comment của mình' },
-    { code: PERMISSIONS.COMMENT_DELETE_ANY, description: 'Xóa bất kỳ comment nào' },
-  ];
-
-  for (const permData of permissionsData) {
-    const permission = permissionRepository.create(permData);
-    await permissionRepository.save(permission);
+  // --- Định nghĩa Role: ADMIN (Quản trị viên) ---
+  // Admin có TẤT CẢ quyền
+  const adminRole = await roleRepo.findOneBy({ name: 'ADMIN' });
+  if (!adminRole) {
+    await roleRepo.save(roleRepo.create({
+      name: 'ADMIN',
+      description: 'Quản trị viên hệ thống, toàn quyền kiểm soát',
+      permissions: allPermissions // Admin lấy hết quyền
+    }));
+  } else {
+    adminRole.permissions = allPermissions;
+    await roleRepo.save(adminRole);
   }
-
-  console.log('Permissions seeded successfully!');
-}
-
-export async function seedRoles() {
-  const roleRepository = AppDataSource.getRepository(Role);
-  const permissionRepository = AppDataSource.getRepository(Permission);
-
-  // Kiểm tra xem đã có role nào chưa
-  const existingRoles = await roleRepository.count();
-  if (existingRoles > 0) {
-    console.log('Roles already exist, skipping seed...');
-    return;
-  }
-
-  // Lấy tất cả permissions
-  const allPermissions = await permissionRepository.find();
-  const getPermissionsByCode = (codes: string[]) => 
-    allPermissions.filter(p => codes.includes(p.code));
-
-  const roles = [
-    {
-      name: 'workspace_admin',
-      description: 'Admin của workspace, có toàn quyền quản lý',
-      permissions: getPermissionsByCode([
-        PERMISSIONS.WORKSPACE_VIEW,
-        PERMISSIONS.WORKSPACE_EDIT,
-        PERMISSIONS.WORKSPACE_DELETE,
-        PERMISSIONS.WORKSPACE_INVITE,
-        PERMISSIONS.WORKSPACE_REMOVE_MEMBER,
-        PERMISSIONS.BOARD_CREATE,
-        PERMISSIONS.BOARD_VIEW,
-        PERMISSIONS.BOARD_EDIT,
-        PERMISSIONS.BOARD_DELETE,
-        PERMISSIONS.BOARD_INVITE,
-      ]),
-    },
-    {
-      name: 'workspace_member',
-      description: 'Thành viên workspace, có quyền xem và tham gia',
-      permissions: getPermissionsByCode([
-        PERMISSIONS.WORKSPACE_VIEW,
-        PERMISSIONS.BOARD_CREATE,
-        PERMISSIONS.BOARD_VIEW,
-      ]),
-    },
-    {
-      name: 'board_admin',
-      description: 'Admin của board, có toàn quyền quản lý board',
-      permissions: getPermissionsByCode([
-        PERMISSIONS.BOARD_VIEW,
-        PERMISSIONS.BOARD_EDIT,
-        PERMISSIONS.BOARD_DELETE,
-        PERMISSIONS.BOARD_INVITE,
-        PERMISSIONS.LIST_CREATE,
-        PERMISSIONS.LIST_EDIT,
-        PERMISSIONS.LIST_DELETE,
-        PERMISSIONS.LIST_MOVE,
-        PERMISSIONS.CARD_CREATE,
-        PERMISSIONS.CARD_VIEW,
-        PERMISSIONS.CARD_EDIT,
-        PERMISSIONS.CARD_DELETE,
-        PERMISSIONS.CARD_MOVE,
-        PERMISSIONS.CARD_ASSIGN,
-        PERMISSIONS.COMMENT_CREATE,
-        PERMISSIONS.COMMENT_EDIT_OWN,
-        PERMISSIONS.COMMENT_DELETE_OWN,
-        PERMISSIONS.COMMENT_DELETE_ANY,
-      ]),
-    },
-    {
-      name: 'board_member',
-      description: 'Thành viên board, có quyền xem và chỉnh sửa',
-      permissions: getPermissionsByCode([
-        PERMISSIONS.BOARD_VIEW,
-        PERMISSIONS.LIST_CREATE,
-        PERMISSIONS.LIST_EDIT,
-        PERMISSIONS.LIST_MOVE,
-        PERMISSIONS.CARD_CREATE,
-        PERMISSIONS.CARD_VIEW,
-        PERMISSIONS.CARD_EDIT,
-        PERMISSIONS.CARD_MOVE,
-        PERMISSIONS.CARD_ASSIGN,
-        PERMISSIONS.COMMENT_CREATE,
-        PERMISSIONS.COMMENT_EDIT_OWN,
-        PERMISSIONS.COMMENT_DELETE_OWN,
-      ]),
-    },
-    {
-      name: 'board_viewer',
-      description: 'Người xem board, chỉ có quyền xem',
-      permissions: getPermissionsByCode([
-        PERMISSIONS.BOARD_VIEW,
-        PERMISSIONS.CARD_VIEW,
-        PERMISSIONS.COMMENT_CREATE,
-        PERMISSIONS.COMMENT_EDIT_OWN,
-        PERMISSIONS.COMMENT_DELETE_OWN,
-      ]),
-    },
-  ];
-
-  for (const roleData of roles) {
-    const role = roleRepository.create(roleData);
-    await roleRepository.save(role);
-  }
-
-  console.log('Roles seeded successfully!');
-}
+};

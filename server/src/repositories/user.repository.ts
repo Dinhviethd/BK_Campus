@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '@/configs/database.config';
 import { User } from '@/models/user.model';
-
+import {UpdateProfileDTO, RegisterDTO} from '@/DTOs/auth.dto'
 export class UserRepository {
   private repository: Repository<User>;
 
@@ -17,26 +17,26 @@ export class UserRepository {
   }
 
   // Tìm user theo ID
-  async findById(idUser: number): Promise<User | null> {
+  async findById(idUser: string): Promise<User | null> {
     return this.repository.findOne({
       where: { idUser },
     });
   }
 
   // Tạo user mới
-  async create(userData: Partial<User>): Promise<User> {
+  async create(userData: RegisterDTO): Promise<User> {
     const user = this.repository.create(userData);
     return this.repository.save(user);
   }
 
   // Cập nhật user
-  async update(idUser: number, updateData: Partial<User>): Promise<User | null> {
+  async update(idUser: string, updateData: UpdateProfileDTO): Promise<User | null> {
     await this.repository.update(idUser, updateData);
     return this.findById(idUser);
   }
 
   // Xóa user
-  async delete(idUser: number): Promise<boolean> {
+  async delete(idUser: string): Promise<boolean> {
     const result = await this.repository.delete(idUser);
     return result.affected !== 0;
   }

@@ -1,12 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, ManyToMany, Column, JoinTable } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToMany, Column, JoinTable, OneToMany } from 'typeorm';
 import { Permission } from './permission.model';
+import {User} from './user.model'
 @Entity('roles')
 export class Role {
-  @PrimaryGeneratedColumn()
-  idRole!: number;
+  @PrimaryGeneratedColumn('uuid')
+  idRole!: string;
 
   @Column()
-  name!: string; // workspace_admin, board_editor...
+  name!: string;
 
   @Column({ nullable: true })
   description?: string;
@@ -18,6 +19,8 @@ export class Role {
     inverseJoinColumn: { name: 'idPermission' },
   })
   permissions!: Permission[];
+  @OneToMany(() => User, user => user.role)
+  users!: User[];
 }
 
 
