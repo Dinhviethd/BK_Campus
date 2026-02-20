@@ -1,4 +1,30 @@
-const ROLE_PERMISSIONS = {
-    ADMIN: ['ban_user', 'delete_user', 'delete_post'],
-    USER: ['create_post', 'edit_own_post', 'delete_own_post']
-};
+export enum userRole{
+    ADMIN = 'admin',
+    USER = 'user'
+}
+export enum location {
+    khuA= 'Khu A',
+    khuB= 'Khu B',
+    khuC= 'Khu C',
+    khuD= 'Khu D',
+    khuE= 'Khu E',
+    khuF= 'Khu F',
+    thuVien= 'Thư Viện',
+    nhaXeF= 'Nhà Xe Khu F',
+    nhaXeE= 'Nhà Xe Khu E',
+    sanTheDuc= 'Sân Thể Dục',
+}
+export enum post_source {
+    webUser= "WEB_USER",
+    facebook = "FACEBOOK_CRAWL"
+}
+export enum post_type{
+    lost= 'lost',
+    found= 'found'
+}
+export enum process_status {
+    processing= 'processing',
+    rejected= 'rejected',
+    closed= 'closed',
+    active='active'
+}

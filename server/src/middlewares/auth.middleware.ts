@@ -6,7 +6,7 @@ import { User } from "@/models/user.model";
 import dotenv from "dotenv"
 dotenv.config()
 interface JwtPayload {
-  userId: number;
+  userId: string;
 }
 
 declare global {

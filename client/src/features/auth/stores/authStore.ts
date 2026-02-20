@@ -15,11 +15,13 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  isAuthVerified: boolean;
   
   setAuth: (user: User, accessToken: string) => void;
   setAccessToken: (accessToken: string) => void;
   setUser: (user: User) => void;
   clearAuth: () => void;
+  setAuthVerified: (verified: boolean) => void;
 }
 
 export const useAuth = create<AuthState>()(
@@ -28,12 +30,14 @@ export const useAuth = create<AuthState>()(
       user: null,
       accessToken: null,
       isAuthenticated: false,
+      isAuthVerified: false,
 
       setAuth: (user, accessToken) =>
         set({
           user,
           accessToken,
           isAuthenticated: true,
+          isAuthVerified: true,
         }),
 
       setAccessToken: (accessToken) =>
@@ -51,6 +55,12 @@ export const useAuth = create<AuthState>()(
           user: null,
           accessToken: null,
           isAuthenticated: false,
+          isAuthVerified: true,
+        }),
+
+      setAuthVerified: (verified) =>
+        set({
+          isAuthVerified: verified,
         }),
     }),
     {
@@ -59,6 +69,7 @@ export const useAuth = create<AuthState>()(
         user: state.user,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
+        // Note: isAuthVerified is NOT persisted — always starts as false on reload
       }),
     }
   )

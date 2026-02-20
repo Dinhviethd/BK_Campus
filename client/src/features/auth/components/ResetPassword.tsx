@@ -16,8 +16,9 @@ import { Input } from "@/components/ui/input"
 import { OTPForm } from "./OTPForm"
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/services/authService"
+import { authService } from "@/features/auth/services/authService"
 import { toast } from "sonner"
+import { forgotPasswordSchema, verifyOTPSchema, resetPasswordSchema } from "@/features/auth/schemas/auth.schema"
 
 type Step = "email" | "otp" | "reset"
 
@@ -31,9 +32,23 @@ export default function ResetPassword() {
     newPassword: "",
     confirmPassword: "",
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+
+    const result = forgotPasswordSchema.safeParse({ email })
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as string
+        if (!fieldErrors[field]) fieldErrors[field] = err.message
+      })
+      setErrors(fieldErrors)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -42,6 +57,7 @@ export default function ResetPassword() {
       if (response.success) {
         toast.success(response.message || "Verification code has been sent to your email")
         setStep("otp")
+        setErrors({})
       }
     } catch (error: any) {
       const message = error.response?.data?.message || "Failed to send OTP"
@@ -53,6 +69,20 @@ export default function ResetPassword() {
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+
+    const result = verifyOTPSchema.safeParse({ email, otp })
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as string
+        if (!fieldErrors[field]) fieldErrors[field] = err.message
+      })
+      setErrors(fieldErrors)
+      toast.error(fieldErrors.otp || "OTP không hợp lệ")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -61,6 +91,7 @@ export default function ResetPassword() {
       if (response.success) {
         toast.success(response.message || "OTP is valid")
         setStep("reset")
+        setErrors({})
       }
     } catch (error: any) {
       const message = error.response?.data?.message || "Invalid OTP"
@@ -90,9 +121,21 @@ export default function ResetPassword() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error("Confirm password does not match")
+    setErrors({})
+
+    const result = resetPasswordSchema.safeParse({
+      email,
+      otp,
+      newPassword: passwords.newPassword,
+      confirmPassword: passwords.confirmPassword,
+    })
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as string
+        if (!fieldErrors[field]) fieldErrors[field] = err.message
+      })
+      setErrors(fieldErrors)
       return
     }
 
@@ -138,10 +181,21 @@ export default function ResetPassword() {
                     type="email"
                     placeholder="m@example.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (errors.email) {
+                        setErrors((prev) => {
+                          const next = { ...prev }
+                          delete next.email
+                          return next
+                        })
+                      }
+                    }}
                     disabled={loading}
                   />
+                  {errors.email && (
+                    <p className="text-sm text-destructive">{errors.email}</p>
+                  )}
                   <FieldDescription>
                     We will send a 6-digit verification code to this email.
                   </FieldDescription>
@@ -204,13 +258,24 @@ export default function ResetPassword() {
                   id="newPassword"
                   type="password"
                   value={passwords.newPassword}
-                  onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                  required
+                  onChange={(e) => {
+                    setPasswords({ ...passwords, newPassword: e.target.value })
+                    if (errors.newPassword) {
+                      setErrors((prev) => {
+                        const next = { ...prev }
+                        delete next.newPassword
+                        return next
+                      })
+                    }
+                  }}
                   disabled={loading}
                 />
                 <FieldDescription>
                   At least 6 characters, including uppercase, lowercase, and numbers.
                 </FieldDescription>
+                {errors.newPassword && (
+                  <p className="text-sm text-destructive">{errors.newPassword}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
@@ -218,10 +283,21 @@ export default function ResetPassword() {
                   id="confirmPassword"
                   type="password"
                   value={passwords.confirmPassword}
-                  onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                  required
+                  onChange={(e) => {
+                    setPasswords({ ...passwords, confirmPassword: e.target.value })
+                    if (errors.confirmPassword) {
+                      setErrors((prev) => {
+                        const next = { ...prev }
+                        delete next.confirmPassword
+                        return next
+                      })
+                    }
+                  }}
                   disabled={loading}
                 />
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                )}
               </Field>
               <Field>
                 <Button type="submit" disabled={loading} className="w-full">

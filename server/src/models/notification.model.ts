@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn } from 'typeorm';
 import { User } from './user.model';
+
 @Entity('notifications')
 export class Notification {
   @PrimaryGeneratedColumn('uuid') 
-  idNotification!: string;
+  id!: string;
 
   @Column()
   content!: string;

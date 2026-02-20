@@ -1,4 +1,4 @@
-import api from './api';
+import api from '../../../lib/api';
 import { useAuth, type User } from '../stores/authStore';
 
 export interface LoginRequest {
@@ -49,7 +49,7 @@ export interface ApiResponse<T = null> {
 export const authService = {
   async register(data: RegisterRequest): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/register', data);
-    
+    console.log("test");
     if (response.data.success && response.data.data) {
       const { user, accessToken } = response.data.data;
       useAuth.getState().setAuth(user, accessToken);

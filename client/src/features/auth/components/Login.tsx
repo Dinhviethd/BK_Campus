@@ -16,8 +16,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/services/authService"
+import { authService } from "@/features/auth/services/authService"
 import { toast } from "sonner"
+import { loginSchema } from "@/features/auth/schemas/auth.schema"
 
 export function LoginForm({
   className,
@@ -29,20 +30,46 @@ export function LoginForm({
     email: "",
     password: "",
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [id]: value,
     })
+    // Xóa lỗi khi user bắt đầu nhập lại
+    if (errors[id]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+
+    // Validate bằng Zod schema
+    const result = loginSchema.safeParse(formData)
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as string
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message
+        }
+      })
+      setErrors(fieldErrors)
+      return
+    }
+
     setLoading(true)
 
     try {
-      const response = await authService.login(formData)
+      const response = await authService.login(result.data)
       
       if (response.success) {
         toast.success(response.message || "Đăng nhập thành công!")
@@ -75,9 +102,11 @@ export function LoginForm({
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  required
                   disabled={loading}
                 />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
               </Field>
               <Field>
                 <div className="flex items-center">
@@ -94,9 +123,11 @@ export function LoginForm({
                   type="password" 
                   value={formData.password}
                   onChange={handleChange}
-                  required 
                   disabled={loading}
                 />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
               </Field>
               <Field>
                 <Button type="submit" disabled={loading} className="w-full">

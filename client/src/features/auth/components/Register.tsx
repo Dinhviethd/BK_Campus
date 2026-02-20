@@ -15,8 +15,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { authService } from "@/services/authService"
+import { authService } from "@/features/auth/services/authService"
 import { toast } from "sonner"
+import { registerSchema } from "@/features/auth/schemas/auth.schema"
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const navigate = useNavigate()
@@ -28,26 +29,45 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     confirmPassword: "",
     phone: "",
   })
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value,
+      [id]: value,
     })
+    if (errors[id]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Confirm password does not match")
+    setErrors({})
+
+    // Validate bằng Zod schema
+    const result = registerSchema.safeParse(formData)
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {}
+      result.error.issues.forEach((err) => {
+        const field = err.path[0] as string
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = err.message
+        }
+      })
+      setErrors(fieldErrors)
       return
     }
 
     setLoading(true)
 
     try {
-      const response = await authService.register(formData)
+      const response = await authService.register(result.data)
       
       if (response.success) {
         toast.success(response.message || "Registration successful!")
@@ -79,9 +99,11 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 type="text" 
                 value={formData.name}
                 onChange={handleChange}
-                required 
                 disabled={loading}
               />
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -90,9 +112,11 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
                 disabled={loading}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="phone">Số điện thoại (tùy chọn)</FieldLabel>
@@ -111,12 +135,14 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 type="password" 
                 value={formData.password}
                 onChange={handleChange}
-                required 
                 disabled={loading}
               />
               <FieldDescription>
                 Ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số.
               </FieldDescription>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="confirmPassword">
@@ -127,9 +153,11 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 type="password" 
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                required 
                 disabled={loading}
               />
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+              )}
             </Field>
             <FieldGroup>
               <Field>

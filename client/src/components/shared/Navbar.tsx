@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/navigation-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/stores/authStore"
-import { authService } from "@/services/authService"
+import { useAuth } from "@/features/auth/stores/authStore"
+import { authService } from "@/features/auth/services/authService"
 import { useNavigate } from "react-router-dom"
 
 // Simple logo component for the navbar
-const Logo = (props: React.SVGAttributes<SVGElement>) => {
+const Logo = () => {
   return (
   <img 
       src="/logo.png" 
@@ -78,10 +78,9 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: NavbarNavLink[] = [
-  { href: "#", label: "Home", active: true },
-  { href: "#features", label: "Features" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#about", label: "About" },
+  { href: "#", label: "Trang chủ", active: true },
+  { href: "#mypost", label: "Bài của tôi" },
+  { href: "#notification", label: "Thông báo" },
 ]
 
 export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
@@ -142,7 +141,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
     return (
       <header
         className={cn(
-          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 [&_*]:no-underline",
+          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-8 md:px-12 lg:px-24 [&_*]:no-underline",
           className,
         )}
         ref={combinedRef}

@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import { useAuth } from '../stores/authStore'
+import { useAuth } from '../features/auth/stores/authStore'
 
 const api = axios.create({
     baseURL:  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
@@ -86,7 +86,7 @@ api.interceptors.response.use(
                 useAuth.getState().clearAuth();
                 
                 if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
+                    window.location.href = '/auth/login';
                 }
                 
                 return Promise.reject(refreshError);

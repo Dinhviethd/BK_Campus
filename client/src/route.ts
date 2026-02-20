@@ -1,12 +1,12 @@
 
 import {App} from "./App";
-import AuthLayout from "@/components/layouts/AuthLayout";
-import { LoginForm } from "@/components/auth/Login"
-import {SignupForm} from '@/components/auth/Register'
-import ResetPassword from '@/components/auth/ResetPassword'
-import MainLayout from '@/components/layouts/MainLayout'
-import {MainPage} from '@/components/MainPage'
-import { ProtectedRoute, PublicRoute } from '@/components/auth/ProtectedRoute'
+import AuthLayout from "@/features/auth/layouts/AuthLayout";
+import { LoginForm } from "@/features/auth/components/Login"
+import {SignupForm} from '@/features/auth/components/Register'
+import ResetPassword from '@/features/auth/components/ResetPassword'
+import MainLayout from '@/components/shared/MainLayout'
+import HomePage from '@/features/main-page/pages/MainPage'
+import { ProtectedRoute, PublicRoute } from '@/features/auth/components/ProtectedRoute'
 
 const routes = [
   {
@@ -15,19 +15,19 @@ const routes = [
     children: [
       {
         path: "/",
-        // Component: ProtectedRoute, 
+        Component: ProtectedRoute, 
         children: [
           {
             Component: MainLayout,
             children: [
-              { path: "", Component: MainPage },
+              { path: "", Component: HomePage },
             ],
           },
         ],
       },
       {
         path: "auth",
-        // Component: PublicRoute, 
+        Component: PublicRoute, 
         children: [
           {
             Component: AuthLayout,

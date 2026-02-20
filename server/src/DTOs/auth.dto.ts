@@ -7,7 +7,7 @@ export interface AuthResponseDTO {
 
 // DTO cho thông tin user
 export interface UserDTO {
-  idUser: number;
+  idUser: string;
   name: string;
   email: string;
   emailVerified: boolean;
@@ -28,6 +28,10 @@ export interface UpdateProfileDTO {
   name?: string;
   avatarUrl?: string;
   phone?: string;
+  password?: string;
+  emailVerified?: boolean;
+  resetOTP?: string;
+  resetOTPExpires?: Date;
 }
 // DTO cho request đăng nhập
 export interface LoginRequestDTO {
