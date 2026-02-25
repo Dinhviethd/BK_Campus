@@ -14,7 +14,7 @@ export class Post_image {
 @Column({type: "vector"})
   embedding?: string[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({name: 'created_at'})
   createdAt!: Date;
 
   @ManyToOne(() => Post, post => post.images)

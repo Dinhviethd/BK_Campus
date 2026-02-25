@@ -6,6 +6,7 @@ import { Post_image } from '@/models/post_image.model';
 import { post_type, process_status } from '@/constants/constants';
 import { PaginationResult } from '@/utils/pagination';
 import cloudinary, { uploadToCloudinary } from '@/configs/cloudinary';
+import { postCacheService } from '@/services/postCache.service';
 
 export class PostService {
   private postRepo: PostRepository;
@@ -35,6 +36,11 @@ export class PostService {
     const fullPost = await this.postRepo.findById(post.id);
     if (!fullPost) {
       throw new AppError(500, 'Lỗi khi tạo bài viết');
+    }
+
+    // Đẩy bài mới lên đầu cache → mọi người thấy ngay lập tức
+    if (fullPost.status === process_status.active) {
+      postCacheService.addPost(fullPost);
     }
 
     return fullPost;
@@ -123,6 +129,33 @@ export class PostService {
     limit: number = 20
   ): Promise<PaginationResult<Post>> {
     return this.postRepo.findByType(type, page, limit);
+  }
+
+
+
+  /**
+   * Lấy bài crawled active mới hơn cursor.
+   * Client gửi cursor (ISO string). Lần đầu gửi "1970-01-01T00:00:00.000Z".
+   * Trả về danh sách posts + nextCursor (để lưu lại cho lần gọi sau).
+   */
+  async getNewCrawledPosts(
+    cursor: string,
+    limit: number = 100
+  ): Promise<{ posts: Post[]; nextCursor: string }> {
+    const cursorDate = new Date(cursor);
+    if (isNaN(cursorDate.getTime())) {
+      throw new AppError(400, 'cursor không phải là ISO date hợp lệ');
+    }
+
+    const posts = await this.postRepo.findNewCrawledPosts(cursorDate, limit);
+
+    // nextCursor = updatedAt của bài cuối cùng, hoặc giữ nguyên nếu không có bài mới
+    const nextCursor =
+      posts.length > 0
+        ? posts[posts.length - 1].updatedAt.toISOString()
+        : cursor;
+
+    return { posts, nextCursor };
   }
 
   // ==================== STATUS ====================

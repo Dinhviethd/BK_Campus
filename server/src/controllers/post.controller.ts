@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { postService } from '@/services/post.service';
+import { postCacheService } from '@/services/postCache.service';
 import { postSchema } from '@/schemas/post.schema';
 import { asyncHandler, AppError } from '@/utils/error.response';
 import { ApiResponseDTO } from '@/DTOs/auth.dto';
@@ -179,6 +180,50 @@ class PostController {
     const response: ApiResponseDTO<PaginationResult<Post>> = {
       success: true,
       message: `Lấy bài viết loại "${type}" thành công`,
+      data: result,
+    };
+
+    res.status(200).json(response);
+  });
+
+ 
+
+  /**
+   * GET /posts/crawled/cached
+   * Trả bài viết crawled từ bộ nhớ cache (RAM).
+   * Cực nhanh — không query DB.
+   * Query: ?page=1&limit=20
+   */
+  getCachedCrawledPosts = asyncHandler(async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    const result = postCacheService.getCachedPosts(page, limit);
+
+    const response: ApiResponseDTO<typeof result> = {
+      success: true,
+      message: `Trả ${result.data.length} bài từ cache (tổng: ${result.total})`,
+      data: result,
+    };
+
+    res.status(200).json(response);
+  });
+
+  /**
+   * Lấy bài crawled active mới (cursor-based, incremental).
+   * Query: ?cursor=ISO_DATE&limit=100
+   * Lần đầu: cursor=1970-01-01T00:00:00.000Z
+   * Sau đó dùng nextCursor từ response trước.
+   */
+  getNewCrawledPosts = asyncHandler(async (req: Request, res: Response) => {
+    const cursor = (req.query.cursor as string) || '1970-01-01T00:00:00.000Z';
+    const limit = parseInt(req.query.limit as string) || 100;
+
+    const result = await postService.getNewCrawledPosts(cursor, limit);
+
+    const response: ApiResponseDTO<{ posts: Post[]; nextCursor: string }> = {
+      success: true,
+      message: `Lấy ${result.posts.length} bài crawled mới`,
       data: result,
     };
 

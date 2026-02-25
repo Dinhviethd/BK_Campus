@@ -4,18 +4,36 @@ import * as nsfwjs from 'nsfwjs';
 import sharp from 'sharp';
 import { AppError } from '@/utils/error.response';
 
-// Singleton: load model 1 lần duy nhất
-let model: nsfwjs.NSFWJS | null = null;
+// Singleton: cache Promise thay vì cache model → tránh race condition
+let modelPromise: Promise<nsfwjs.NSFWJS> | null = null;
 
-const loadModel = async (): Promise<nsfwjs.NSFWJS> => {
-  if (!model) {
-    model = await nsfwjs.load();
+const loadModel = (): Promise<nsfwjs.NSFWJS> => {
+  if (!modelPromise) {
+    console.log('[NSFW] Loading NSFW model...');
+    modelPromise = nsfwjs.load().then((m) => {
+      console.log('[NSFW] Model loaded successfully');
+      return m;
+    }).catch((err) => {
+      // Reset để có thể thử load lại nếu lỗi
+      modelPromise = null;
+      throw err;
+    });
   }
-  return model;
+  return modelPromise;
+};
+
+/**
+ * Pre-load model khi server khởi động.
+ * Gọi hàm này trong main.ts để tránh load lazy ở request đầu tiên.
+ */
+export const preloadNsfwModel = (): void => {
+  loadModel().catch((err) => {
+    console.error('[NSFW] Failed to preload model:', err);
+  });
 };
 
 // Ngưỡng NSFW — tổng xác suất (Porn + Hentai + Sexy) >= threshold → reject
-const NSFW_THRESHOLD = 0.6;
+const NSFW_THRESHOLD = 0.4;
 
 export interface NsfwResult {
   filename: string;
@@ -60,16 +78,22 @@ const decodeImageFromBuffer = async (buffer: Buffer): Promise<tf.Tensor3D> => {
 };
 
 /**
- * Phân tích 1 ảnh từ buffer và trả về NSFW score
+ * Phân tích 1 ảnh từ buffer và trả về NSFW score + chi tiết predictions
  */
 const classifyImage = async (
   nsfwModel: nsfwjs.NSFWJS,
-  buffer: Buffer
+  buffer: Buffer,
+  filename: string
 ): Promise<number> => {
   const imageTensor = await decodeImageFromBuffer(buffer);
 
   try {
     const predictions = await nsfwModel.classify(imageTensor);
+
+    // Log chi tiết từng class để debug
+    console.log(`[NSFW] "${filename}" predictions:`,
+      predictions.map(p => `${p.className}=${(p.probability * 100).toFixed(1)}%`).join(', ')
+    );
 
     const nsfwClasses = ['Porn', 'Hentai', 'Sexy'];
     const nsfwScore = predictions.reduce(
@@ -81,6 +105,8 @@ const classifyImage = async (
       },
       0
     );
+
+    console.log(`[NSFW] "${filename}" total NSFW score: ${(nsfwScore * 100).toFixed(1)}% (threshold: ${NSFW_THRESHOLD * 100}%)`);
 
     return nsfwScore;
   } finally {
@@ -112,12 +138,14 @@ export const checkNsfw = async (
     const nsfwModel = await loadModel();
     const results: NsfwResult[] = [];
 
+    console.log(`[NSFW] Checking ${imageFiles.length} image(s)...`);
+
     for (const file of imageFiles) {
       if (!file.buffer) {
         continue; // Bỏ qua nếu không có buffer (không phải memoryStorage)
       }
 
-      const score = await classifyImage(nsfwModel, file.buffer);
+      const score = await classifyImage(nsfwModel, file.buffer, file.originalname);
 
       results.push({
         filename: file.originalname,

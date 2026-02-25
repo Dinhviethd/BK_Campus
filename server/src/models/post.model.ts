@@ -1,8 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, OneToMany, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, OneToMany, UpdateDateColumn, Index } from 'typeorm';
 import  { post_source, post_type, process_status} from '../constants/constants';
 import {User} from './user.model'
 import { Post_image } from './post_image.model';
+
 @Entity('posts')
+@Index('IDX_posts_crawl_cursor', ['source', 'status', 'type', 'updatedAt'])
 export class Post {
   @PrimaryGeneratedColumn('uuid') 
   id!: string;
@@ -28,10 +30,10 @@ export class Post {
   @Column({type: 'vector'})
   content_embedding?: string[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({name: 'created_at'})
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({name: 'updated_at'})
   updatedAt!: Date;
 
     @ManyToOne(() => User, user => user.posts)

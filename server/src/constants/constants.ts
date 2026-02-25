@@ -19,12 +19,12 @@ export enum post_source {
     facebook = "FACEBOOK_CRAWL"
 }
 export enum post_type{
-    lost= 'lost',
-    found= 'found'
+    lost= 'LOST',
+    found= 'FOUND'
 }
 export enum process_status {
-    processing= 'processing',
-    rejected= 'rejected',
-    closed= 'closed',
-    active='active'
+    processing= 'PROCESSING',
+    rejected= 'REJECTED',
+    closed= 'CLOSED',
+    active='ACTIVE'
 }

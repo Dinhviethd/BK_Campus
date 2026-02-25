@@ -10,7 +10,7 @@ interface FilterProps {
 
 export const FilterSidebar = ({ filterArea, setFilterArea, searchKeyword, setSearchKeyword }: FilterProps) => {
     return (
-        <div className="space-y-4 sticky top-24 h-fit">
+        <div className="space-y-4">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
                     <SlidersHorizontal size={18} className="text-blue-600"/>
@@ -43,10 +43,10 @@ export const FilterSidebar = ({ filterArea, setFilterArea, searchKeyword, setSea
                     )}
                 </div>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
+            {/* <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white shadow-lg">
                 <h3 className="font-bold flex items-center gap-2"><Zap size={16}/> ReFind Premium</h3>
                 <p className="text-xs mt-1 text-blue-100">Bot AI sẽ tự động gửi SMS khi tìm thấy đồ khớp 90%.</p>
-            </div>
+            </div> */}
         </div>
     );
 };

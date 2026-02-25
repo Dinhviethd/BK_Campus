@@ -14,6 +14,12 @@ router.get('/', postController.getAll);
 // Lấy bài viết theo loại (lost / found)
 router.get('/type/:type', postController.getByType);
 
+// Lấy bài crawled từ cache (RAM) — dùng cho trang chủ
+router.get('/crawled/cached', postController.getCachedCrawledPosts);
+
+// Lấy bài crawled mới (cursor-based, incremental)
+router.get('/crawled/new', postController.getNewCrawledPosts);
+
 // Lấy chi tiết bài viết
 router.get('/:id', postController.getById);
 

@@ -1,10 +1,10 @@
 import { CheckCircle, XCircle, MapPin } from 'lucide-react';
-import type { Post } from '../../types';
+import type { Post } from '@/features/main-page/types';
 
 interface MatchModalProps {
     matches: Post[];
     onClose: () => void;
-    onResolve: (id: number) => void;
+    onResolve: (id: string) => void;
 }
 
 export const MatchModal = ({ matches, onClose, onResolve }: MatchModalProps) => (
@@ -18,7 +18,7 @@ export const MatchModal = ({ matches, onClose, onResolve }: MatchModalProps) => 
                 {matches.map(match => (
                     <div key={match.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                         <h4 className="font-bold text-gray-800">{match.content}</h4>
-                        <p className="text-xs text-gray-500"><MapPin size={12}/> {match.location}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><MapPin size={12}/> {match.location}</p>
                         <button onClick={() => onResolve(match.id)} className="mt-3 w-full py-2 bg-green-600 text-white rounded-lg font-bold">Đây là đồ của tôi!</button>
                     </div>
                 ))}

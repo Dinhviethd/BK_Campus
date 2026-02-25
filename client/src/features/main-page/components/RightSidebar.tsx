@@ -16,8 +16,8 @@ const StatRow = ({ label, value, color }: any) => (
 
 export const RightSidebar = ({ activeTab, bellActive, isScanning, handleBellClick }: RightSidebarProps) => {
     return (
-        <div className="space-y-6 sticky top-24 h-fit">
-            {activeTab === 'lost' && (
+        <div className="space-y-6">
+            {activeTab === 'LOST' && (
                 <div className={`rounded-xl border p-5 transition-all duration-300 ${bellActive ? 'bg-white border-green-500 shadow-green-100 shadow-lg' : 'bg-white border-gray-200 shadow-sm'}`}>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-bold text-gray-800">Trạng thái AI</h3>

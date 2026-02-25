@@ -7,6 +7,8 @@ import path from 'path'
 import jwt from 'jsonwebtoken'
 import router from './routes/index'
 import { initDatabase } from '@/configs/database.config'
+import { postCacheService } from '@/services/postCache.service'
+import { preloadNsfwModel } from '@/middlewares/nsfw.middleware'
 import errorHandler from "@/middlewares/errorHandlermiddleware";
 
 
@@ -30,11 +32,18 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }))
 
-initDatabase().catch(err => {
+initDatabase()
+  .then(async () => {
+    // DB sẵn sàng → load cache bài crawled vào RAM
+    await postCacheService.init();
+    // Pre-load NSFW model khi server khởi động (không block server start)
+    preloadNsfwModel();
+  })
+  .catch(err => {
     console.error("WRONG PASSWORD: Cannot connect to Database!");
     console.error(err);
     process.exit(1);
-});
+  });
 
 app.use("/api", router)
 

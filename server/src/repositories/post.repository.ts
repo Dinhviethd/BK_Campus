@@ -2,13 +2,14 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '@/configs/database.config';
 import { Post } from '@/models/post.model';
 import { Post_image } from '@/models/post_image.model';
-import { post_type, process_status } from '@/constants/constants';
+import { post_source, post_type, process_status } from '@/constants/constants';
 import { PaginationResult, createPaginationQuery, PaginationUtil } from '@/utils/pagination';
 import {UpdatePostDTO, CreatePostDTO } from '@/DTOs/post.dto'
 
 export interface PostFilterOptions {
   type?: post_type;
   status?: process_status;
+  source?: post_source;
   location?: string;
   userId?: string;
   search?: string;
@@ -86,6 +87,9 @@ export class PostRepository {
     }
     if (filters?.status) {
       query.andWhere('post.status = :status', { status: filters.status });
+    }
+    if (filters?.source) {
+      query.andWhere('post.source = :source', { source: filters.source });
     }
     if (filters?.location) {
       query.andWhere('post.location = :location', { location: filters.location });
@@ -175,6 +179,32 @@ export class PostRepository {
   /** Đếm bài viết theo trạng thái */
   async countByStatus(status: process_status): Promise<number> {
     return this.repository.count({ where: { status } });
+  }
+
+  // ==================== CRAWLED POSTS ====================
+
+
+
+  /**
+   * Lấy bài crawled active mới hơn cursor (updatedAt > cursor).
+   * Điều kiện cố định: source=FACEBOOK_CRAWL, type=found, status=active.
+   * Sắp xếp ASC theo updatedAt để trả kết quả theo thứ tự thời gian.
+   * Sử dụng index IDX_posts_crawl_cursor.
+   */
+  async findNewCrawledPosts(
+    cursor: Date,
+    limit: number = 100
+  ): Promise<Post[]> {
+    return this.repository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.images', 'images')
+      .where('post.source = :source', { source: post_source.facebook })
+      .andWhere('post.status = :status', { status: process_status.active })
+      .andWhere('post.type = :type', { type: post_type.found })
+      .andWhere('post.updatedAt > :cursor', { cursor })
+      .orderBy('post.updatedAt', 'ASC')
+      .take(limit)
+      .getMany();
   }
 }
 
