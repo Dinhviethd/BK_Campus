@@ -1,10 +1,24 @@
 import api from '@/lib/api';
+import axios from 'axios';
 import type {
   Post,
   PostFilters,
   PaginationResult,
   ApiResponse,
 } from '../types';
+
+interface MatchingRequestPayload {
+  lost_post_id: string;
+}
+
+export interface MatchingRequestResponse {
+  request_id: string;
+  lost_post_id: string;
+  user_id: string;
+  status: string;
+  created_at: string;
+  message: string;
+}
 
 // ==================== GET ====================
 
@@ -22,13 +36,7 @@ export const getPosts = async (filters?: PostFilters) => {
   return data.data!;
 };
 
-/** Lấy bài crawled từ cache (RAM) — dùng cho trang chủ */
-export const getCachedCrawledPosts = async (page = 1, limit = 20) => {
-  const { data } = await api.get<ApiResponse<PaginationResult<Post>>>('/posts/crawled/cached', {
-    params: { page, limit },
-  });
-  return data.data!;
-};
+
 
 /** Lấy chi tiết bài viết */
 export const getPostById = async (id: string) => {
@@ -74,4 +82,16 @@ export const updatePostStatus = async (id: string, status: string) => {
 
 export const deletePost = async (id: string) => {
   await api.delete(`/posts/${id}`);
+};
+
+export const triggerAiMatching = async (lostPostId: string) => {
+  const endpoint =
+    import.meta.env.VITE_API_AI_MATCHING;
+
+  const payload: MatchingRequestPayload = {
+    lost_post_id: lostPostId,
+  };
+
+  const { data } = await axios.post<MatchingRequestResponse>(endpoint, payload);
+  return data;
 };

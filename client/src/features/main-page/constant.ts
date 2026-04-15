@@ -11,6 +11,7 @@ export const LOCATIONS = [
   { id: 'Nhà Xe Khu F', label: 'Nhà Xe Khu F' },
   { id: 'Nhà Xe Khu E', label: 'Nhà Xe Khu E' },
   { id: 'Sân Thể Dục', label: 'Sân Thể Dục' },
+  {id: 'Khu H', label: 'Khu H'},
 ] as const;
 
 export type LocationId = (typeof LOCATIONS)[number]['id'];

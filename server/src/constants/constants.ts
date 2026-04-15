@@ -9,6 +9,7 @@ export enum location {
     khuD= 'Khu D',
     khuE= 'Khu E',
     khuF= 'Khu F',
+    khuH="Khu H",
     thuVien= 'Thư Viện',
     nhaXeF= 'Nhà Xe Khu F',
     nhaXeE= 'Nhà Xe Khu E',
@@ -23,7 +24,9 @@ export enum post_type{
     found= 'FOUND'
 }
 export enum process_status {
-    processing= 'PROCESSING',
+    ingested= 'INGESTED',
+    moderating='MODERATING',
+    embedding= 'EMBEDDING',
     rejected= 'REJECTED',
     closed= 'CLOSED',
     active='ACTIVE'

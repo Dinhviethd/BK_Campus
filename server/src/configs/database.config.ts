@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
 
   ssl: { rejectUnauthorized: false },
 
-  entities: [__dirname + "/../models/*.{ts,js}"],
+  entities: [__dirname + "/../modules/**/models/*.model.{ts,js}"],
   migrations: [__dirname + "/../migrations/*.{ts,js}"],
   synchronize: false,
 });

@@ -9,6 +9,8 @@ import { CreatePostBox } from '../components/CreatePostBox';
 import { PostItem } from '../components/PostItem';
 import { RightSidebar } from '../components/RightSidebar';
 import { MatchModal } from '../components/modals/MatchModal';
+import { useAuth } from '@/features/auth/stores/authStore';
+import { triggerAiMatching } from '../services/postService';
 
 // Store & types
 import { usePostStore } from '../stores/postStore';
@@ -16,11 +18,14 @@ import { LOCATIONS } from '../constant';
 import { PostSource, PostType, type Post } from '../types';
 
 export default function HomePage() {
+    const user = useAuth((state) => state.user);
+
     // --- ZUSTAND STORE ---
     const {
         posts,
         isLoading,
         isCreating,
+        showModerationNotice,
         activeTab,
         filterLocation,
         searchKeyword,
@@ -31,6 +36,7 @@ export default function HomePage() {
         setActiveTab,
         setFilterLocation,
         setSearchKeyword,
+        clearModerationNotice,
         createPost,
         resolvePost,
     } = usePostStore();
@@ -44,7 +50,7 @@ export default function HomePage() {
     const [isScanning, setIsScanning] = useState(false);
     const [bellActive, setBellActive] = useState(false);
     const [showMatchModal, setShowMatchModal] = useState(false);
-    const [matches, setMatches] = useState<Post[]>([]);
+    const [matches] = useState<Post[]>([]);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
 
     // Debounce timer for search
@@ -119,17 +125,51 @@ export default function HomePage() {
     };
 
     // 2. Logic "Cái Chuông" — Kích hoạt AI Matching
-    const handleBellClick = () => {
-        if (bellActive) return;
-        setIsScanning(true);
-        setBellActive(true);
+    const handleBellClick = async () => {
+        if (bellActive || isScanning) return;
 
-        setTimeout(() => {
+        const latestOwnLostPost = posts.find(
+            (post) =>
+                post.type === PostType.LOST &&
+                String(post.user?.idUser) === String(user?.idUser)
+        );
+
+        if (!latestOwnLostPost) {
+            alert('Bạn chưa có bài đăng MẤT đồ để bật AI tìm kiếm.');
+            return;
+        }
+
+        setIsScanning(true);
+
+        try {
+            const matchingResponse = await triggerAiMatching(latestOwnLostPost.id);
+            setBellActive(true);
+
+            if (matchingResponse.status !== 'SCANNING') {
+                setIsScanning(false);
+            }
+
+            if (matchingResponse.message) {
+                alert(matchingResponse.message);
+            }
+        } catch (err: any) {
             setIsScanning(false);
-            const foundMatches = posts.filter((p) => p.type === PostType.FOUND);
-            setMatches(foundMatches.slice(0, 2));
-            setShowMatchModal(true);
-        }, 3000);
+            setBellActive(false);
+
+            const detailError = err?.response?.data?.detail;
+            if (Array.isArray(detailError) && detailError.length > 0) {
+                const messages = detailError
+                    .map((item: { msg?: string }) => item?.msg)
+                    .filter(Boolean)
+                    .join('; ');
+
+                alert(messages || 'Không thể bật AI tìm kiếm. Vui lòng thử lại.');
+                return;
+            }
+
+            const message = err?.response?.data?.message || 'Không thể bật AI tìm kiếm. Vui lòng thử lại.';
+            alert(message);
+        }
     };
 
     // 3. Xử lý Kết thúc case (Đóng bài)
@@ -139,7 +179,7 @@ export default function HomePage() {
                 await resolvePost(postId);
                 setBellActive(false);
                 setShowMatchModal(false);
-                alert('🎉 Chúc mừng bạn! Case đã đóng.');
+                alert('Chúc mừng bạn! Case đã đóng.');
             } catch {
                 alert('Lỗi khi đóng bài. Vui lòng thử lại.');
             }
@@ -166,6 +206,21 @@ export default function HomePage() {
                 }
                 mainContent={
                     <div className="space-y-6">
+                        {showModerationNotice && (
+                            <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 flex items-center justify-between gap-3">
+                                <p className="text-sm md:text-base font-medium">
+                                    Bài của bạn đang được phê duyệt, vui lòng chờ trong giây lát.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={clearModerationNotice}
+                                    className="text-amber-700 hover:text-amber-900 text-sm font-semibold"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        )}
+
                         <CreatePostBox
                             activeTab={activeTab}
                             setActiveTab={setActiveTab}

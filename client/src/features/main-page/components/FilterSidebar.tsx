@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal, CheckCircle, Zap } from 'lucide-react';
+import { Search, SlidersHorizontal, CheckCircle } from 'lucide-react';
 import { LOCATIONS } from '@/features/main-page/constant';
 
 interface FilterProps {

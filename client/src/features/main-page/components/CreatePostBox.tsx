@@ -44,8 +44,8 @@ export const CreatePostBox = ({
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="flex border-b border-gray-100">
-                <button onClick={() => setActiveTab(PostType.LOST)} disabled={activeTab === PostType.LOST} className={`flex-1 py-4 font-bold transition-all ${activeTab === PostType.LOST ? 'text-red-500 border-b-2 border-red-500 bg-red-50 cursor-default' : 'text-gray-500 hover:bg-gray-50 cursor-pointer'}`}>🕵️ Tôi bị mất đồ</button>
-                <button onClick={() => setActiveTab(PostType.FOUND)} disabled={activeTab === PostType.FOUND} className={`flex-1 py-4 font-bold transition-all ${activeTab === PostType.FOUND ? 'text-green-600 border-b-2 border-green-500 bg-green-50 cursor-default' : 'text-gray-500 hover:bg-gray-50 cursor-pointer'}`}>🙋‍♂️ Tôi nhặt được</button>
+                <button onClick={() => setActiveTab(PostType.LOST)} disabled={activeTab === PostType.LOST} className={`flex-1 py-4 font-bold transition-all ${activeTab === PostType.LOST ? 'text-red-500 border-b-2 border-red-500 bg-red-50 cursor-default' : 'text-gray-500 hover:bg-gray-50 cursor-pointer'}`}>Tôi bị mất đồ</button>
+                <button onClick={() => setActiveTab(PostType.FOUND)} disabled={activeTab === PostType.FOUND} className={`flex-1 py-4 font-bold transition-all ${activeTab === PostType.FOUND ? 'text-green-600 border-b-2 border-green-500 bg-green-50 cursor-default' : 'text-gray-500 hover:bg-gray-50 cursor-pointer'}`}>Tôi nhặt được</button>
             </div>
             <div className="p-4">
                 {(!bellActive || activeTab === PostType.FOUND) ? (

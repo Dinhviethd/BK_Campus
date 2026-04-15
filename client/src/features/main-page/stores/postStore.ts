@@ -3,6 +3,16 @@ import type { Post, PostType } from '../types';
 import { ProcessStatus } from '../types';
 import * as postApi from '../services/postService';
 
+// const getPostSource = (post: Post): string | undefined => {
+//   const postWithLegacySource = post as Post & { post_source?: string };
+//   return postWithLegacySource.source ?? postWithLegacySource.post_source;
+// };
+
+// const shouldHideFromLostTab = (post: Post, activeTab: string): boolean => {
+//   if (activeTab !== 'LOST') return false;
+//   return getPostSource(post) === 'FACEBOOK_CRAWL';
+// };
+
 interface PostState {
   // Data
   posts: Post[];
@@ -18,6 +28,7 @@ interface PostState {
   // UI State
   isLoading: boolean;
   isCreating: boolean;
+  showModerationNotice: boolean;
   error: string | null;
 
   // Actions
@@ -26,6 +37,7 @@ interface PostState {
   setActiveTab: (tab: string) => void;
   setFilterLocation: (location: string) => void;
   setSearchKeyword: (keyword: string) => void;
+  clearModerationNotice: () => void;
   createPost: (payload: postApi.CreatePostPayload) => Promise<Post>;
   resolvePost: (id: string) => Promise<void>;
 }
@@ -37,14 +49,13 @@ export const usePostStore = create<PostState>((set, get) => ({
   page: 1,
   totalPages: 1,
 
-  // Initial filters
   activeTab: 'LOST',
   filterLocation: 'all',
   searchKeyword: '',
 
-  // Initial UI
   isLoading: false,
   isCreating: false,
+  showModerationNotice: false,
   error: null,
 
   // ==================== FETCH ====================
@@ -64,6 +75,7 @@ export const usePostStore = create<PostState>((set, get) => ({
       if (searchKeyword.trim()) params.search = searchKeyword.trim();
 
       const result = await postApi.getPosts(params);
+      // const filteredPosts = result.data.filter((post) => !shouldHideFromLostTab(post, activeTab));
 
       set({
         posts: result.data,
@@ -98,6 +110,7 @@ export const usePostStore = create<PostState>((set, get) => ({
       if (searchKeyword.trim()) params.search = searchKeyword.trim();
 
       const result = await postApi.getPosts(params);
+      // const filteredPosts = result.data.filter((post) => !shouldHideFromLostTab(post, activeTab));
 
       set({
         posts: [...posts, ...result.data],
@@ -129,6 +142,10 @@ export const usePostStore = create<PostState>((set, get) => ({
     set({ searchKeyword: keyword });
   },
 
+  clearModerationNotice: () => {
+    set({ showModerationNotice: false });
+  },
+
   // ==================== CREATE ====================
 
   createPost: async (payload) => {
@@ -143,9 +160,18 @@ export const usePostStore = create<PostState>((set, get) => ({
           posts: [newPost, ...state.posts],
           total: state.total + 1,
           isCreating: false,
+          showModerationNotice: false,
         }));
+      } else if (newPost.status === ProcessStatus.MODERATING) {
+        set({
+          isCreating: false,
+          showModerationNotice: true,
+        });
       } else {
-        set({ isCreating: false });
+        set({
+          isCreating: false,
+          showModerationNotice: false,
+        });
       }
 
       return newPost;

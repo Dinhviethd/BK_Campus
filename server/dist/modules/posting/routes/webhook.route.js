@@ -1,0 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const webhook_controller_1 = require("../../../modules/posting/controllers/webhook.controller");
+const validate_middleware_1 = require("../../../middlewares/validate.middleware");
+const webhook_schema_1 = require("../../../modules/posting/webhook.schema");
+const router = (0, express_1.Router)();
+router.post('/ai/analyze-callback', (0, validate_middleware_1.validate)(webhook_schema_1.aiAnalyzeCallbackSchema), webhook_controller_1.webhookController.aiAnalyzeCallback);
+exports.default = router;

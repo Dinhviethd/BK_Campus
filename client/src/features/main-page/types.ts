@@ -13,7 +13,9 @@ export const PostType = {
 export type PostType = (typeof PostType)[keyof typeof PostType];
 
 export const ProcessStatus = {
-  PROCESSING: 'PROCESSING',
+  INGESTED: 'INGESTED',
+  MODERATING: 'MODERATING',
+  EMBEDDING: 'EMBEDDING',
   REJECTED: 'REJECTED',
   CLOSED: 'CLOSED',
   ACTIVE: 'ACTIVE',
@@ -64,7 +66,6 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
-// ==================== FILTERS ====================
 
 export interface PostFilters {
   type?: PostType;
