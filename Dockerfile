@@ -1,5 +1,5 @@
 # --- Giai đoạn 1: Build Frontend (Client) ---
-FROM node:20-alpine AS client-builder
+FROM node:20-slim AS client-builder
 WORKDIR /app/client
 
 # Copy file package của client để cài library trước (tận dụng cache)
@@ -13,7 +13,7 @@ RUN npm run build
 
 
 # --- Giai đoạn 2: Build Backend (Server) ---
-FROM node:20-alpine AS server-builder
+FROM node:20-slim AS server-builder
 WORKDIR /app/server
 
 # Copy file package của server
@@ -27,7 +27,7 @@ RUN npm run build
 
 
 # --- Giai đoạn 3: Đóng gói Final Image ---
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
 
 # 1. Copy code Server đã build và các thư viện cần thiết

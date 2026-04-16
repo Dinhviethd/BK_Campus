@@ -97,17 +97,19 @@ class PostRepository {
     }
     // ==================== IMAGES ====================
     /** Thêm ảnh vào bài viết */
-    async addImages(postId, images) {
-        const postImages = images.map((img) => this.imageRepository.create({
-            url: img.url,
-            nsfwScore: img.nsfwScore,
+    async addImages(postId, imageUrls) {
+        if (imageUrls.length === 0) {
+            return [];
+        }
+        const postImage = this.imageRepository.create({
+            url: imageUrls,
             post: { id: postId },
-        }));
-        return this.imageRepository.save(postImages);
+        });
+        return [await this.imageRepository.save(postImage)];
     }
     /** Xoá 1 ảnh */
-    async removeImage(imageId) {
-        const result = await this.imageRepository.delete(imageId);
+    async removeImage(postId, imageId) {
+        const result = await this.imageRepository.delete({ id: imageId, post: { id: postId } });
         return result.affected !== 0;
     }
     /** Lấy danh sách ảnh của 1 bài viết */
@@ -128,6 +130,27 @@ class PostRepository {
             status: payload.status,
             ...(payload.type ? { type: payload.type } : {}),
         });
+        return this.findById(id);
+    }
+    /** Cập nhật dữ liệu embedding cho post + post_image */
+    async updateEmbeddingResult(id, payload) {
+        await this.repository.update(id, {
+            status: payload.status,
+            ...(payload.extractedInfo !== undefined
+                ? { extractedInfo: payload.extractedInfo }
+                : {}),
+            ...(payload.itemTypeEmbedding !== undefined
+                ? { itemTypeEmbedding: payload.itemTypeEmbedding }
+                : {}),
+        });
+        if (payload.imageFeature) {
+            await this.imageRepository.update({ id: payload.imageFeature.postImagesId, post: { id } }, {
+                url: payload.imageFeature.imageUrls,
+                extractedFeatures: payload.imageFeature.extractedFeatures !== undefined
+                    ? payload.imageFeature.extractedFeatures
+                    : null,
+            });
+        }
         return this.findById(id);
     }
     /** Kiểm tra bài viết có tồn tại và thuộc về user không */

@@ -10,12 +10,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-// Multer memory storage — giữ ảnh trong buffer, không lưu local
 const memoryStorage = multer.memoryStorage()
 
 export const uploadPostImages = multer({
   storage: memoryStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     if (allowedMimes.includes(file.mimetype)) {

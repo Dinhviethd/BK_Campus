@@ -15,7 +15,6 @@ const post_model_1 = require("./post.model");
 let Post_image = class Post_image {
     id;
     url;
-    nsfwScore;
     extractedFeatures;
     createdAt;
     post;
@@ -26,13 +25,9 @@ __decorate([
     __metadata("design:type", String)
 ], Post_image.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
+    (0, typeorm_1.Column)({ type: 'jsonb', name: 'urls' }),
+    __metadata("design:type", Array)
 ], Post_image.prototype, "url", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: "float" }),
-    __metadata("design:type", Number)
-], Post_image.prototype, "nsfwScore", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', name: 'extracted_features', nullable: true }),
     __metadata("design:type", Object)

@@ -15,6 +15,7 @@ import {
   aiEmbeddingResponseSchema,
   AiEmbeddingCallbackDTO,
 } from '@/modules/posting/webhook.schema';
+import { publishPostEvent } from '@/modules/realtime/post-realtime.publisher';
 
 export class PostService {
   private postRepo: PostRepository;
@@ -205,6 +206,15 @@ export class PostService {
     if (data.process_status === 'FAILED') {
       await this.dispatchAnalyzeRequest(post, true);
       const latestPost = await this.postRepo.findById(post.id);
+
+      if (latestPost) {
+        await this.publishPostRealtimeSafely({
+          postId: latestPost.id,
+          eventType: 'AI_ANALYZE_RETRIED',
+          post: latestPost,
+        });
+      }
+
       return { retried: true, forwardedEmbedding: false, post: latestPost };
     }
 
@@ -230,8 +240,22 @@ export class PostService {
       await this.dispatchEmbeddingRequest(latestPost);
       const postAfterDispatch = await this.postRepo.findById(post.id);
 
+      if (postAfterDispatch) {
+        await this.publishPostRealtimeSafely({
+          postId: postAfterDispatch.id,
+          eventType: 'AI_ANALYZE_UPDATED',
+          post: postAfterDispatch,
+        });
+      }
+
       return { retried: false, forwardedEmbedding: true, post: postAfterDispatch };
     }
+
+    await this.publishPostRealtimeSafely({
+      postId: updatedPost.id,
+      eventType: 'AI_ANALYZE_UPDATED',
+      post: updatedPost,
+    });
 
     return { retried: false, forwardedEmbedding: false, post: updatedPost };
   }
@@ -246,27 +270,45 @@ export class PostService {
     if (data.process_status === 'FAILED') {
       await this.dispatchEmbeddingRequest(post, true);
       const latestPost = await this.postRepo.findById(post.id);
+
+      if (latestPost) {
+        await this.publishPostRealtimeSafely({
+          postId: latestPost.id,
+          eventType: 'AI_EMBEDDING_RETRIED',
+          post: latestPost,
+        });
+      }
+
       return { retried: true, post: latestPost };
     }
 
-    if (!data.status || !data.image_feature) {
-      throw new AppError(400, 'Thiếu status hoặc image_feature khi process_status = SUCCESS');
+    if (!data.status) {
+      throw new AppError(400, 'Thiếu status khi process_status = SUCCESS');
     }
 
     const updatedPost = await this.postRepo.updateEmbeddingResult(post.id, {
       status: data.status,
       extractedInfo: data.extracted_info,
       itemTypeEmbedding: data.item_type_embedding,
-      imageFeature: {
-        postImagesId: data.image_feature.post_images_id,
-        imageUrls: data.image_feature.image_urls,
-        extractedFeatures: data.image_feature.extracted_features,
-      },
+      imageFeature:
+        data.image_feature?.post_images_id
+          ? {
+              postImagesId: data.image_feature.post_images_id,
+              imageUrls: data.image_feature.image_urls,
+              extractedFeatures: data.image_feature.extracted_features,
+            }
+          : undefined,
     });
 
     if (!updatedPost) {
       throw new AppError(500, 'Lỗi khi cập nhật dữ liệu embedding từ callback AI');
     }
+
+    await this.publishPostRealtimeSafely({
+      postId: updatedPost.id,
+      eventType: 'AI_EMBEDDING_UPDATED',
+      post: updatedPost,
+    });
 
     return { retried: false, post: updatedPost };
   }
@@ -361,6 +403,22 @@ export class PostService {
     };
   }
 
+  private async publishPostRealtimeSafely(input: {
+    postId: string;
+    eventType: 'AI_ANALYZE_UPDATED' | 'AI_ANALYZE_RETRIED' | 'AI_EMBEDDING_UPDATED' | 'AI_EMBEDDING_RETRIED';
+    post: Post;
+  }): Promise<void> {
+    try {
+      await publishPostEvent(input);
+    } catch (error) {
+      console.error('[Realtime] Failed to publish post event', {
+        postId: input.postId,
+        eventType: input.eventType,
+        error,
+      });
+    }
+  }
+
   /** Gửi request sang AI service để phân tích bài viết */
   private async dispatchAnalyzeRequest(post: Post, isRetry: boolean = false): Promise<void> {
     const analyzeUrl = process.env.AI_SERVICE_ANALYZE_URL;
@@ -425,15 +483,12 @@ export class PostService {
 
     const callbackUrl = `${backendPublicUrl.replace(/\/$/, '')}/api/webhook/ai/embedding-callback`;
     const imageContext = this.getPostImageContext(post);
-    if (!imageContext) {
-      throw new AppError(400, 'Không có ảnh hợp lệ để gửi embedding request');
-    }
 
     const payload = aiEmbeddingRequestSchema.parse({
       post_id: post.id,
-      post_images_id: imageContext.postImagesId,
+      post_images_id: imageContext?.postImagesId ?? null,
       content: post.content,
-      image_urls: imageContext.imageUrls,
+      image_urls: imageContext?.imageUrls ?? [],
       callback_url: callbackUrl,
     });
 

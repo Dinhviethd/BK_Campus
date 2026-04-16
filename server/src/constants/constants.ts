@@ -31,3 +31,15 @@ export enum process_status {
     closed= 'CLOSED',
     active='ACTIVE'
 }
+
+export enum candidate_status {
+    pending = 'PENDING',
+    accepted = 'ACCEPTED',
+    rejected = 'REJECTED'
+}
+
+export enum match_request_status {
+    scanning = 'SCANNING',
+    completed = 'COMPLETED',
+    cancelled = 'CANCELLED'
+}

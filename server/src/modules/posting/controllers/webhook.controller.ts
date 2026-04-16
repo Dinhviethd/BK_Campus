@@ -3,6 +3,8 @@ import { asyncHandler, AppError } from '@/utils/error.response';
 import { ApiResponse } from '@/constants/api.type';
 import { postService } from '@/modules/posting/services/post.service';
 import { AiAnalyzeCallbackDTO, AiEmbeddingCallbackDTO } from '@/modules/posting/webhook.schema';
+import { matchingService } from '@/modules/posting/services/matching.service';
+import { AiMatchingCallbackDTO } from '@/modules/posting/matching.schema';
 
 class WebhookController {
 	/**
@@ -63,6 +65,39 @@ class WebhookController {
 				post_id: callbackBody.post_id,
 				retried: result.retried,
 				status: result.post?.status || 'UNKNOWN',
+			},
+		};
+
+		res.status(200).json(response);
+	});
+
+	/**
+	 * POST /api/webhook/matching/history
+	 * Nhận callback scan history từ AI matching service.
+	 */
+	matchingHistoryCallback = asyncHandler(async (req: Request, res: Response) => {
+		this.verifyWebhookSecret(req);
+
+		const callbackBody = req.body as AiMatchingCallbackDTO;
+		const result = await matchingService.handleMatchingCallback(callbackBody);
+
+		const response: ApiResponse<{
+			request_id: string;
+			lost_post_id: string;
+			retried: boolean;
+			status: string;
+			candidates_created: number;
+		}> = {
+			success: true,
+			message: result.retried
+				? 'Matching callback FAILED: đã gửi lại request để AI xử lý lại'
+				: 'Matching callback SUCCESS: đã lưu match candidates',
+			data: {
+				request_id: callbackBody.request_id,
+				lost_post_id: callbackBody.lost_post_id,
+				retried: result.retried,
+				status: result.request?.status || 'UNKNOWN',
+				candidates_created: result.candidatesCreated,
 			},
 		};
 

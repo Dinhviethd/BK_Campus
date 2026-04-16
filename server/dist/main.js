@@ -11,10 +11,10 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const path_1 = __importDefault(require("path"));
 const index_1 = __importDefault(require("./modules/index"));
 const database_config_1 = require("./configs/database.config");
-const nsfw_middleware_1 = require("./middlewares/nsfw.middleware");
 const errorHandlermiddleware_1 = __importDefault(require("./middlewares/errorHandlermiddleware"));
 const redis_config_1 = require("./configs/redis.config");
 const socket_config_1 = require("./configs/socket.config");
+const post_realtime_subscriber_1 = require("./modules/realtime/post-realtime.subscriber");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const server = (0, http_1.createServer)(app);
@@ -40,10 +40,8 @@ let isShuttingDown = false;
 const startServer = async () => {
     try {
         await (0, database_config_1.initDatabase)();
-        if (process.env.NODE_ENV !== "production") {
-            (0, nsfw_middleware_1.preloadNsfwModel)();
-        }
         await (0, redis_config_1.initRedis)();
+        await (0, post_realtime_subscriber_1.initPostRealtimeSubscriber)();
         (0, socket_config_1.initSocket)(server);
         server.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
@@ -66,6 +64,7 @@ const gracefulShutdown = async (signal) => {
     }, 10000);
     try {
         await (0, socket_config_1.closeSocket)();
+        await (0, redis_config_1.closeRedisConnections)();
         await new Promise((resolve, reject) => {
             server.close(error => {
                 if (error)

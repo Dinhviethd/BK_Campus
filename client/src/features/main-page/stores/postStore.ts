@@ -20,30 +20,32 @@ interface PostState {
   page: number;
   totalPages: number;
 
-  // Filters
   activeTab: PostType | string;
   filterLocation: string;
   searchKeyword: string;
+  selectedUserId: string | null;
+  selectedUserName: string | null;
 
-  // UI State
   isLoading: boolean;
   isCreating: boolean;
   showModerationNotice: boolean;
   error: string | null;
 
-  // Actions
   fetchPosts: () => Promise<void>;
   loadMore: () => Promise<void>;
   setActiveTab: (tab: string) => void;
   setFilterLocation: (location: string) => void;
   setSearchKeyword: (keyword: string) => void;
+  setSelectedUserFilter: (userId: string, userName?: string) => void;
+  clearSelectedUserFilter: () => void;
+  setModerationNotice: (visible: boolean) => void;
   clearModerationNotice: () => void;
   createPost: (payload: postApi.CreatePostPayload) => Promise<Post>;
   resolvePost: (id: string) => Promise<void>;
+  deleteOwnPost: (id: string) => Promise<void>;
 }
 
 export const usePostStore = create<PostState>((set, get) => ({
-  // Initial data
   posts: [],
   total: 0,
   page: 1,
@@ -52,30 +54,30 @@ export const usePostStore = create<PostState>((set, get) => ({
   activeTab: 'LOST',
   filterLocation: 'all',
   searchKeyword: '',
+  selectedUserId: null,
+  selectedUserName: null,
 
   isLoading: false,
   isCreating: false,
   showModerationNotice: false,
   error: null,
 
-  // ==================== FETCH ====================
 
   fetchPosts: async () => {
-    const { activeTab, filterLocation, searchKeyword } = get();
+    const { activeTab, filterLocation, searchKeyword, selectedUserId } = get();
     set({ isLoading: true, error: null });
 
     try {
-      const params: Record<string, any> = {
-        type: activeTab,
-        status: ProcessStatus.ACTIVE,
-        page: 1,
-        limit: 20,
-      };
-      if (filterLocation !== 'all') params.location = filterLocation;
-      if (searchKeyword.trim()) params.search = searchKeyword.trim();
-
-      const result = await postApi.getPosts(params);
-      // const filteredPosts = result.data.filter((post) => !shouldHideFromLostTab(post, activeTab));
+      const result = selectedUserId
+        ? await postApi.getPostsByUser(selectedUserId, 1, 20)
+        : await postApi.getPosts({
+          type: activeTab as PostType,
+            status: ProcessStatus.ACTIVE,
+            page: 1,
+            limit: 20,
+            ...(filterLocation !== 'all' ? { location: filterLocation } : {}),
+            ...(searchKeyword.trim() ? { search: searchKeyword.trim() } : {}),
+          });
 
       set({
         posts: result.data,
@@ -93,23 +95,23 @@ export const usePostStore = create<PostState>((set, get) => ({
   },
 
   loadMore: async () => {
-    const { page, totalPages, activeTab, filterLocation, searchKeyword, posts } = get();
+    const { page, totalPages, activeTab, filterLocation, searchKeyword, selectedUserId, posts } = get();
     if (page >= totalPages) return;
 
     const nextPage = page + 1;
     set({ isLoading: true });
 
     try {
-      const params: Record<string, any> = {
-        type: activeTab,
-        status: ProcessStatus.ACTIVE,
-        page: nextPage,
-        limit: 20,
-      };
-      if (filterLocation !== 'all') params.location = filterLocation;
-      if (searchKeyword.trim()) params.search = searchKeyword.trim();
-
-      const result = await postApi.getPosts(params);
+      const result = selectedUserId
+        ? await postApi.getPostsByUser(selectedUserId, nextPage, 20)
+        : await postApi.getPosts({
+          type: activeTab as PostType,
+            status: ProcessStatus.ACTIVE,
+            page: nextPage,
+            limit: 20,
+            ...(filterLocation !== 'all' ? { location: filterLocation } : {}),
+            ...(searchKeyword.trim() ? { search: searchKeyword.trim() } : {}),
+          });
       // const filteredPosts = result.data.filter((post) => !shouldHideFromLostTab(post, activeTab));
 
       set({
@@ -127,19 +129,35 @@ export const usePostStore = create<PostState>((set, get) => ({
     }
   },
 
-  // ==================== FILTERS ====================
 
   setActiveTab: (tab: string) => {
-    set({ activeTab: tab, page: 1, posts: [] });
+    set({ activeTab: tab, page: 1, posts: [], selectedUserId: null, selectedUserName: null });
     // fetchPosts sẽ được gọi bởi useEffect khi activeTab thay đổi
   },
 
   setFilterLocation: (location: string) => {
-    set({ filterLocation: location, page: 1, posts: [] });
+    set({ filterLocation: location, page: 1, posts: [], selectedUserId: null, selectedUserName: null });
   },
 
   setSearchKeyword: (keyword: string) => {
-    set({ searchKeyword: keyword });
+    set({ searchKeyword: keyword, selectedUserId: null, selectedUserName: null });
+  },
+
+  setSelectedUserFilter: (userId: string, userName?: string) => {
+    set({
+      selectedUserId: userId,
+      selectedUserName: userName || null,
+      page: 1,
+      posts: [],
+    });
+  },
+
+  clearSelectedUserFilter: () => {
+    set({ selectedUserId: null, selectedUserName: null, page: 1, posts: [] });
+  },
+
+  setModerationNotice: (visible: boolean) => {
+    set({ showModerationNotice: visible });
   },
 
   clearModerationNotice: () => {
@@ -195,6 +213,19 @@ export const usePostStore = create<PostState>((set, get) => ({
       }));
     } catch (err: any) {
       set({ error: err?.response?.data?.message || 'Lỗi khi đóng bài' });
+      throw err;
+    }
+  },
+
+  deleteOwnPost: async (id: string) => {
+    try {
+      await postApi.deletePost(id);
+      set((state) => ({
+        posts: state.posts.filter((p) => p.id !== id),
+        total: Math.max(0, state.total - 1),
+      }));
+    } catch (err: any) {
+      set({ error: err?.response?.data?.message || 'Lỗi khi xóa bài viết' });
       throw err;
     }
   },

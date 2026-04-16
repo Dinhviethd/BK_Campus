@@ -10,17 +10,20 @@ import { PostItem } from '../components/PostItem';
 import { RightSidebar } from '../components/RightSidebar';
 import { MatchModal } from '../components/modals/MatchModal';
 import { useAuth } from '@/features/auth/stores/authStore';
-import { triggerAiMatching } from '../services/postService';
+import {
+    createPostRealtimeEventSource,
+    getMatchingScanState,
+    getMyPosts,
+    triggerAiMatching,
+} from '../services/postService';
 
-// Store & types
 import { usePostStore } from '../stores/postStore';
 import { LOCATIONS } from '../constant';
-import { PostSource, PostType, type Post } from '../types';
+import { PostSource, PostType, ProcessStatus, type Post } from '../types';
 
 export default function HomePage() {
     const user = useAuth((state) => state.user);
 
-    // --- ZUSTAND STORE ---
     const {
         posts,
         isLoading,
@@ -29,6 +32,8 @@ export default function HomePage() {
         activeTab,
         filterLocation,
         searchKeyword,
+        selectedUserId,
+        selectedUserName,
         totalPages,
         page,
         fetchPosts,
@@ -36,33 +41,130 @@ export default function HomePage() {
         setActiveTab,
         setFilterLocation,
         setSearchKeyword,
+        setSelectedUserFilter,
+        clearSelectedUserFilter,
+        setModerationNotice,
         clearModerationNotice,
         createPost,
         resolvePost,
+        deleteOwnPost,
     } = usePostStore();
 
-    // Local UI state
     const [newPostContent, setNewPostContent] = useState('');
     const [newPostLocation, setNewPostLocation] = useState('');
     const [newPostImages, setNewPostImages] = useState<File[]>([]);
 
-    // AI & Bot Logic State
     const [isScanning, setIsScanning] = useState(false);
     const [bellActive, setBellActive] = useState(false);
     const [showMatchModal, setShowMatchModal] = useState(false);
     const [matches] = useState<Post[]>([]);
     const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [showRejectedNotice, setShowRejectedNotice] = useState(false);
 
-    // Debounce timer for search
     const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+    const rejectedPostIdsRef = useRef<Set<string>>(new Set());
 
-    // Infinite scroll sentinel
     const sentinelRef = useRef<HTMLDivElement>(null);
 
-    // --- FETCH khi filter thay đổi ---
     useEffect(() => {
         fetchPosts();
     }, [activeTab, filterLocation, fetchPosts]);
+
+    useEffect(() => {
+        if (!user?.idUser) {
+            setModerationNotice(false);
+            setBellActive(false);
+            setIsScanning(false);
+            return;
+        }
+
+        let cancelled = false;
+
+        const restoreAiState = async () => {
+            try {
+                const [myPostsResult, scanState] = await Promise.all([
+                    getMyPosts(1, 50),
+                    getMatchingScanState(),
+                ]);
+
+                if (cancelled) {
+                    return;
+                }
+
+                const hasPendingModeration = myPostsResult.data.some(
+                    (post) =>
+                        post.status === ProcessStatus.MODERATING ||
+                        post.status === ProcessStatus.EMBEDDING
+                );
+
+                setModerationNotice(hasPendingModeration);
+                setBellActive(scanState.is_scanning);
+                setIsScanning(scanState.is_scanning);
+            } catch {
+                if (cancelled) {
+                    return;
+                }
+
+                setModerationNotice(false);
+                setBellActive(false);
+                setIsScanning(false);
+            }
+        };
+
+        restoreAiState();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [setModerationNotice, user?.idUser]);
+
+    useEffect(() => {
+        const eventSource = createPostRealtimeEventSource();
+        let refreshTimeout: ReturnType<typeof setTimeout> | undefined;
+
+        eventSource.onmessage = (event) => {
+            try {
+                const payload = JSON.parse(event.data) as {
+                    type?: string;
+                    postId?: string;
+                    post?: {
+                        status?: string;
+                        user?: { idUser?: string | number };
+                    };
+                };
+
+                if (payload.type === 'connected') {
+                    return;
+                }
+
+                const isRejected = payload.post?.status === ProcessStatus.REJECTED;
+                const isOwner = String(payload.post?.user?.idUser) === String(user?.idUser);
+
+                if (isRejected && isOwner && payload.postId && !rejectedPostIdsRef.current.has(payload.postId)) {
+                    rejectedPostIdsRef.current.add(payload.postId);
+                    setShowRejectedNotice(true);
+                    clearModerationNotice();
+                }
+            } catch {
+                // Ignore invalid payloads and keep stream alive.
+            }
+
+            if (refreshTimeout) {
+                clearTimeout(refreshTimeout);
+            }
+
+            refreshTimeout = setTimeout(() => {
+                fetchPosts();
+            }, 250);
+        };
+
+        return () => {
+            if (refreshTimeout) {
+                clearTimeout(refreshTimeout);
+            }
+            eventSource.close();
+        };
+    }, [clearModerationNotice, fetchPosts, user?.idUser]);
 
     // --- INFINITE SCROLL via IntersectionObserver ---
     useEffect(() => {
@@ -193,6 +295,25 @@ export default function HomePage() {
         });
     };
 
+    const handleDeletePost = async (postId: string) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này? Hành động này không thể hoàn tác.')) {
+            return;
+        }
+
+        try {
+            await deleteOwnPost(postId);
+            alert('Đã xóa bài viết thành công.');
+        } catch (err: any) {
+            const message = err?.response?.data?.message || 'Xóa bài viết thất bại. Vui lòng thử lại.';
+            alert(message);
+        }
+    };
+
+    const handleViewUserPosts = (userId: string, userName?: string) => {
+        if (!userId) return;
+        setSelectedUserFilter(userId, userName);
+    };
+
     return (
         <>
             <MainPageLayout
@@ -215,6 +336,21 @@ export default function HomePage() {
                                     type="button"
                                     onClick={clearModerationNotice}
                                     className="text-amber-700 hover:text-amber-900 text-sm font-semibold"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
+                        )}
+
+                        {showRejectedNotice && (
+                            <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-red-900 flex items-center justify-between gap-3">
+                                <p className="text-sm md:text-base font-medium">
+                                    Bài đăng của bạn đã bị từ chối trong quá trình kiểm duyệt AI.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRejectedNotice(false)}
+                                    className="text-red-700 hover:text-red-900 text-sm font-semibold"
                                 >
                                     Đóng
                                 </button>
@@ -252,6 +388,21 @@ export default function HomePage() {
                             </div>
                         )}
 
+                        {selectedUserId && (
+                            <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-900">
+                                <p className="text-sm md:text-base font-medium">
+                                    Đang xem tất cả bài viết của {selectedUserName || 'người dùng này'}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={clearSelectedUserFilter}
+                                    className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+                                >
+                                    Quay lại feed
+                                </button>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {isLoading && posts.length === 0 ? (
                                 <div className="text-center py-12">
@@ -266,6 +417,9 @@ export default function HomePage() {
                                             post={post}
                                             activeTab={activeTab}
                                             handleSendLink={handleSendLink}
+                                            canDelete={String(post.user?.idUser) === String(user?.idUser)}
+                                            onDelete={handleDeletePost}
+                                            onViewUserPosts={handleViewUserPosts}
                                         />
                                     ))}
 

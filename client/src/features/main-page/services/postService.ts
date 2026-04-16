@@ -1,5 +1,4 @@
 import api from '@/lib/api';
-import axios from 'axios';
 import type {
   Post,
   PostFilters,
@@ -18,6 +17,21 @@ export interface MatchingRequestResponse {
   status: string;
   created_at: string;
   message: string;
+}
+
+export interface MatchingScanStateResponse {
+  is_scanning: boolean;
+  request_id: string | null;
+  lost_post_id: string | null;
+  status: string | null;
+}
+
+export interface PostRealtimeEvent {
+  postId: string;
+  channel: string;
+  eventType: string;
+  occurredAt: string;
+  post: Post;
 }
 
 // ==================== GET ====================
@@ -44,7 +58,21 @@ export const getPostById = async (id: string) => {
   return data.data!;
 };
 
-// ==================== CREATE ====================
+/** Lấy tất cả bài viết của 1 user */
+export const getPostsByUser = async (userId: string, page: number = 1, limit: number = 20) => {
+  const { data } = await api.get<ApiResponse<PaginationResult<Post>>>(`/posts/user/${userId}`, {
+    params: { page, limit },
+  });
+  return data.data!;
+};
+
+export const getMyPosts = async (page: number = 1, limit: number = 20) => {
+  const { data } = await api.get<ApiResponse<PaginationResult<Post>>>('/posts/me/posts', {
+    params: { page, limit },
+  });
+  return data.data!;
+};
+
 
 export interface CreatePostPayload {
   content: string;
@@ -55,7 +83,6 @@ export interface CreatePostPayload {
   images?: File[];
 }
 
-/** Tạo bài viết mới (multipart/form-data vì có ảnh) */
 export const createPost = async (payload: CreatePostPayload) => {
   const formData = new FormData();
   formData.append('content', payload.content);
@@ -73,7 +100,6 @@ export const createPost = async (payload: CreatePostPayload) => {
   return data.data!;
 };
 
-// ==================== UPDATE / DELETE ====================
 
 export const updatePostStatus = async (id: string, status: string) => {
   const { data } = await api.patch<ApiResponse<Post>>(`/posts/${id}/status`, { status });
@@ -85,13 +111,29 @@ export const deletePost = async (id: string) => {
 };
 
 export const triggerAiMatching = async (lostPostId: string) => {
-  const endpoint =
-    import.meta.env.VITE_API_AI_MATCHING;
-
   const payload: MatchingRequestPayload = {
     lost_post_id: lostPostId,
   };
 
-  const { data } = await axios.post<MatchingRequestResponse>(endpoint, payload);
-  return data;
+  const { data } = await api.post<ApiResponse<MatchingRequestResponse>>('/matching/match-requests', payload);
+  return data.data!;
+};
+
+export const getMatchingScanState = async () => {
+  const { data } = await api.get<ApiResponse<MatchingScanStateResponse>>('/matching/match-requests/scan-state');
+  return data.data!;
+};
+
+export const createPostRealtimeEventSource = (postId?: string) => {
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').trim().replace(/\/$/, '');
+  const streamPath = `${apiBaseUrl}/realtime/posts/stream`;
+  const streamUrl = new URL(streamPath, window.location.origin);
+
+  if (postId) {
+    streamUrl.searchParams.set('postId', postId);
+  }
+
+  return new EventSource(streamUrl.toString(), {
+    withCredentials: true,
+  });
 };

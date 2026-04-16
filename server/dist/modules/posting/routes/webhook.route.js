@@ -6,4 +6,5 @@ const validate_middleware_1 = require("../../../middlewares/validate.middleware"
 const webhook_schema_1 = require("../../../modules/posting/webhook.schema");
 const router = (0, express_1.Router)();
 router.post('/ai/analyze-callback', (0, validate_middleware_1.validate)(webhook_schema_1.aiAnalyzeCallbackSchema), webhook_controller_1.webhookController.aiAnalyzeCallback);
+router.post('/ai/embedding-callback', (0, validate_middleware_1.validate)(webhook_schema_1.aiEmbeddingCallbackSchema), webhook_controller_1.webhookController.aiEmbeddingCallback);
 exports.default = router;

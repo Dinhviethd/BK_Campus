@@ -22,8 +22,6 @@ export const ProcessStatus = {
 } as const;
 export type ProcessStatus = (typeof ProcessStatus)[keyof typeof ProcessStatus];
 
-// ==================== ENTITIES ====================
-
 export interface PostImage {
   id: string;
   url: string;
@@ -35,7 +33,6 @@ export interface PostUser {
   avatarUrl?: string;
 }
 
-/** Backend Post entity (GET /api/posts response) */
 export interface Post {
   id: string;
   source: PostSource;

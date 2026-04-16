@@ -18,7 +18,7 @@ export const aiAnalyzeResponseSchema = z.object({
 
 export const aiEmbeddingRequestSchema = z.object({
 	post_id: z.string().uuid('post_id không hợp lệ'),
-	post_images_id: z.string().uuid('post_images_id không hợp lệ'),
+	post_images_id: z.string().uuid('post_images_id không hợp lệ').optional().nullable(),
 	content: z.string().min(1, 'content không được để trống'),
 	image_urls: z.array(z.string().url('image_urls chứa URL không hợp lệ')),
 	callback_url: z.string().url('callback_url không hợp lệ'),
@@ -27,7 +27,7 @@ export const aiEmbeddingRequestSchema = z.object({
 export const aiEmbeddingResponseSchema = z.object({
 	message: z.string(),
 	post_id: z.string().uuid('post_id không hợp lệ'),
-	post_images_id: z.string().uuid('post_images_id không hợp lệ'),
+	post_images_id: z.string().uuid('post_images_id không hợp lệ').optional().nullable(),
 });
 
 export const aiAnalyzeCallbackSchema = z
@@ -57,7 +57,7 @@ export const aiEmbeddingCallbackSchema = z
 		item_type_embedding: z.array(z.number()).optional(),
 		image_feature: z
 			.object({
-				post_images_id: z.string().uuid('post_images_id không hợp lệ'),
+				post_images_id: z.string().uuid('post_images_id không hợp lệ').optional().nullable(),
 				image_urls: z.array(z.string().url('image_urls chứa URL không hợp lệ')),
 				extracted_features: z.record(z.string(), z.unknown()).optional(),
 			})
@@ -71,14 +71,6 @@ export const aiEmbeddingCallbackSchema = z
 					code: 'custom',
 					path: ['status'],
 					message: 'status là bắt buộc khi process_status = SUCCESS',
-				});
-			}
-
-			if (!data.image_feature) {
-				ctx.addIssue({
-					code: 'custom',
-					path: ['image_feature'],
-					message: 'image_feature là bắt buộc khi process_status = SUCCESS',
 				});
 			}
 		}

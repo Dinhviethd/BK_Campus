@@ -20,9 +20,7 @@ export class PostCacheService {
 		return latestPosts;
 	}
 
-	/**
-	 * Xóa cache danh sách bài post mới nhất hiện có.
-	 */
+
 	async clearLatestPostsCache(): Promise<void> {
 		await redis.del(LATEST_POSTS_CACHE_KEY);
 	}

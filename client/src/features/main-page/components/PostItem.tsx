@@ -1,4 +1,5 @@
-import { MapPin, ExternalLink, MessageCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MapPin, ExternalLink, MessageCircle, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { Post } from '@/features/main-page/types';
 import { PostSource } from '@/features/main-page/types';
 
@@ -6,6 +7,9 @@ interface PostItemProps {
     post: Post;
     activeTab: string;
     handleSendLink: (id: string) => void;
+    canDelete: boolean;
+    onDelete: (id: string) => void;
+    onViewUserPosts: (userId: string, userName?: string) => void;
 }
 
 /** Tính khoảng cách thời gian tương đối */
@@ -21,7 +25,22 @@ function timeAgo(dateStr: string): string {
     return `${days} ngày trước`;
 }
 
-export const PostItem = ({ post, activeTab, handleSendLink }: PostItemProps) => {
+export const PostItem = ({ post, activeTab, handleSendLink, canDelete, onDelete, onViewUserPosts }: PostItemProps) => {
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!menuRef.current) return;
+            if (!menuRef.current.contains(event.target as Node)) {
+                setShowMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const avatarUrl =
         post.user?.avatarUrl ||
         `https://ui-avatars.com/api/?name=${encodeURIComponent(post.user?.name || 'U')}&background=3b82f6&color=fff`;
@@ -29,7 +48,11 @@ export const PostItem = ({ post, activeTab, handleSendLink }: PostItemProps) => 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
+                <button
+                    type="button"
+                    onClick={() => onViewUserPosts(String(post.user?.idUser || ''), post.user?.name)}
+                    className="flex items-center gap-3 rounded-lg p-1 text-left transition-colors hover:bg-gray-50"
+                >
                     <img src={avatarUrl} alt="avt" className="w-10 h-10 rounded-full border border-gray-100" />
                     <div>
                         <h4 className="font-bold text-sm text-gray-900 flex items-center gap-2">
@@ -44,17 +67,47 @@ export const PostItem = ({ post, activeTab, handleSendLink }: PostItemProps) => 
                             {timeAgo(post.createdAt)} • <MapPin size={12} /> {post.location}
                         </p>
                     </div>
+                </button>
+                <div className="flex items-center gap-1">
+                    {post.source === PostSource.FACEBOOK_CRAWL && post.originalLink && (
+                        <a
+                            href={post.originalLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:bg-blue-50 p-2 rounded-full"
+                        >
+                            <ExternalLink size={18} />
+                        </a>
+                    )}
+
+                    {canDelete && (
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setShowMenu((prev) => !prev)}
+                                className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                aria-label="Mở menu bài viết"
+                            >
+                                <MoreHorizontal size={18} />
+                            </button>
+
+                            {showMenu && (
+                                <div className="absolute right-0 top-10 z-10 min-w-[140px] rounded-lg border border-gray-200 bg-white p-1 shadow-lg">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowMenu(false);
+                                            onDelete(post.id);
+                                        }}
+                                        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                    >
+                                        <Trash2 size={15} /> Xóa bài viết
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
-                {post.source === PostSource.FACEBOOK_CRAWL && post.originalLink && (
-                    <a
-                        href={post.originalLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:bg-blue-50 p-2 rounded-full"
-                    >
-                        <ExternalLink size={18} />
-                    </a>
-                )}
             </div>
 
             <p className="text-gray-800 text-sm leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -89,9 +142,11 @@ export const PostItem = ({ post, activeTab, handleSendLink }: PostItemProps) => 
                         </button>
                     </>
                 ) : (
-                    <button className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg">
-                        <MessageCircle size={16} /> Bình luận / Liên hệ
-                    </button>
+                    <>
+                        <button className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg">
+                            <MessageCircle size={16} /> Bình luận / Liên hệ
+                        </button>
+                    </>
                 )}
             </div>
         </div>

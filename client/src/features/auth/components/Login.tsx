@@ -38,7 +38,6 @@ export function LoginForm({
       ...formData,
       [id]: value,
     })
-    // Xóa lỗi khi user bắt đầu nhập lại
     if (errors[id]) {
       setErrors((prev) => {
         const next = { ...prev }
@@ -52,7 +51,6 @@ export function LoginForm({
     e.preventDefault()
     setErrors({})
 
-    // Validate bằng Zod schema
     const result = loginSchema.safeParse(formData)
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
@@ -85,9 +83,11 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Đăng nhập tài khoản</CardTitle>
+      <Card className="border-blue-100 bg-white shadow-xl shadow-blue-100/70">
+        <CardHeader className="space-y-3">
+          <CardTitle className="text-2xl font-bold tracking-tight text-blue-950">
+            Đăng nhập tài khoản
+          </CardTitle>
           <CardDescription>
             Nhập email của bạn để đăng nhập vào tài khoản
           </CardDescription>
@@ -103,6 +103,7 @@ export function LoginForm({
                   value={formData.email}
                   onChange={handleChange}
                   disabled={loading}
+                  className="border-blue-200 focus-visible:ring-blue-500"
                 />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email}</p>
@@ -113,7 +114,7 @@ export function LoginForm({
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Link
                     to="/auth/reset-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-block text-sm font-medium text-blue-700 underline-offset-4 hover:underline"
                   >
                     Quên mật khẩu?
                   </Link>
@@ -124,18 +125,26 @@ export function LoginForm({
                   value={formData.password}
                   onChange={handleChange}
                   disabled={loading}
+                  className="border-blue-200 focus-visible:ring-blue-500"
                 />
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
                 )}
               </Field>
               <Field>
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="h-11 w-full bg-blue-600 text-white shadow-md shadow-blue-200 transition-colors hover:bg-blue-700"
+                >
                   {loading ? "Logging in..." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">
                   Không có tài khoản?{" "}
-                  <Link to="/auth/register" className="underline">
+                  <Link
+                    to="/auth/register"
+                    className="font-medium text-blue-700 underline"
+                  >
                     Đăng ký
                   </Link>
                 </FieldDescription>

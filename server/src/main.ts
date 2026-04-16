@@ -7,8 +7,9 @@ import path from 'path'
 import router from '@/modules/index'
 import { initDatabase } from '@/configs/database.config'
 import errorHandler from "@/middlewares/errorHandlermiddleware";
-import  { initRedis } from '@/configs/redis.config'
+import { closeRedisConnections, initRedis } from '@/configs/redis.config'
 import { closeSocket, initSocket } from '@/configs/socket.config'
+import { initPostRealtimeSubscriber } from '@/modules/realtime/post-realtime.subscriber'
 
 dotenv.config()
 const app = express()
@@ -47,6 +48,7 @@ const startServer = async (): Promise<void> => {
     await initDatabase()
 
     await initRedis()
+    await initPostRealtimeSubscriber()
 
     initSocket(server)
 
@@ -72,6 +74,8 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
 
   try {
     await closeSocket()
+    await closeRedisConnections()
+
     await new Promise<void>((resolve, reject) => {
       server.close(error => {
         if (error) return reject(error)

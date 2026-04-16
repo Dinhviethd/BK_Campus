@@ -30,8 +30,7 @@ class PostController {
             userId,
         };
         const files = req.files;
-        const nsfwResults = req.nsfwResults;
-        const post = await post_service_1.postService.create(createData, files, nsfwResults);
+        const post = await post_service_1.postService.create(createData, files);
         const response = {
             success: true,
             message: 'Tạo bài viết thành công',
@@ -188,11 +187,10 @@ class PostController {
             throw new error_response_1.AppError(401, 'Unauthorized');
         const { id } = req.params;
         const files = req.files;
-        const nsfwResults = req.nsfwResults;
         if (!files || files.length === 0) {
             throw new error_response_1.AppError(400, 'Vui lòng chọn ít nhất 1 ảnh');
         }
-        const images = await post_service_1.postService.addImages(id, userId, files, nsfwResults);
+        const images = await post_service_1.postService.addImages(id, userId, files);
         const response = {
             success: true,
             message: 'Thêm ảnh thành công',
