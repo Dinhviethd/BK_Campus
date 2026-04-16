@@ -3,6 +3,7 @@ export type PostRealtimeEventType =
   | 'AI_ANALYZE_RETRIED'
   | 'AI_EMBEDDING_UPDATED'
   | 'AI_EMBEDDING_RETRIED'
+  | 'MATCHING_CANDIDATES_READY'
 
 export interface PostRealtimePayload {
   postId: string

@@ -43,6 +43,42 @@ export class MatchRepository {
     });
   }
 
+  async findLatestCompletedRequestWithPendingCandidatesByUser(userId: string): Promise<MatchRequest | null> {
+    const request = await this.requestRepository
+      .createQueryBuilder('request')
+      .leftJoinAndSelect('request.lostPost', 'lostPost')
+      .leftJoinAndSelect('request.user', 'user')
+      .leftJoinAndSelect(
+        'request.candidates',
+        'candidate',
+        'candidate.status = :pendingStatus',
+        { pendingStatus: candidate_status.pending }
+      )
+      .leftJoinAndSelect('candidate.foundPost', 'foundPost')
+      .where('user.idUser = :userId', { userId })
+      .andWhere('request.status = :requestStatus', { requestStatus: match_request_status.completed })
+      .orderBy('request.createdAt', 'DESC')
+      .addOrderBy('candidate.createdAt', 'DESC')
+      .getOne();
+
+    if (!request || !request.candidates || request.candidates.length === 0) {
+      return null;
+    }
+
+    return request;
+  }
+
+  async findPendingCandidate(requestId: string, foundPostId: string): Promise<MatchCandidate | null> {
+    return this.candidateRepository.findOne({
+      where: {
+        request: { id: requestId } as any,
+        foundPost: { id: foundPostId } as any,
+        status: candidate_status.pending,
+      },
+      relations: ['request', 'foundPost'],
+    });
+  }
+
   async updateRequestStatus(
     id: string,
     status: match_request_status,
@@ -76,6 +112,21 @@ export class MatchRepository {
     );
 
     return this.candidateRepository.save(entities);
+  }
+
+  async confirmCandidateSelection(requestId: string, acceptedFoundPostId: string): Promise<void> {
+    await this.candidateRepository.update(
+      { request: { id: requestId } as any, status: candidate_status.pending },
+      { status: candidate_status.rejected }
+    );
+
+    await this.candidateRepository.update(
+      {
+        request: { id: requestId } as any,
+        foundPost: { id: acceptedFoundPostId } as any,
+      },
+      { status: candidate_status.accepted }
+    );
   }
 }
 

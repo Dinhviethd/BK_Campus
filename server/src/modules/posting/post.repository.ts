@@ -46,6 +46,19 @@ export class PostRepository {
     });
   }
 
+  async findByIds(ids: string[]): Promise<Post[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    return this.repository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.images', 'images')
+      .leftJoinAndSelect('post.user', 'user')
+      .where('post.id IN (:...ids)', { ids })
+      .getMany();
+  }
+
   /** Cập nhật bài viết */
   async update(id: string, data: UpdatePostDTO): Promise<Post | null> {
     await this.repository.update(id, data);

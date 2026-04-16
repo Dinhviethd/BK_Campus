@@ -11,7 +11,9 @@ import { RightSidebar } from '../components/RightSidebar';
 import { MatchModal } from '../components/modals/MatchModal';
 import { useAuth } from '@/features/auth/stores/authStore';
 import {
+    confirmMatchingCandidate,
     createPostRealtimeEventSource,
+    getPendingMatchingResult,
     getMatchingScanState,
     getMyPosts,
     triggerAiMatching,
@@ -20,6 +22,11 @@ import {
 import { usePostStore } from '../stores/postStore';
 import { LOCATIONS } from '../constant';
 import { PostSource, PostType, ProcessStatus, type Post } from '../types';
+
+interface MatchItem {
+    post: Post;
+    similarityScore?: number;
+}
 
 export default function HomePage() {
     const user = useAuth((state) => state.user);
@@ -57,7 +64,10 @@ export default function HomePage() {
     const [isScanning, setIsScanning] = useState(false);
     const [bellActive, setBellActive] = useState(false);
     const [showMatchModal, setShowMatchModal] = useState(false);
-    const [matches] = useState<Post[]>([]);
+    const [matches, setMatches] = useState<MatchItem[]>([]);
+    const [pendingMatchRequestId, setPendingMatchRequestId] = useState<string | null>(null);
+    const [matchedLostPostId, setMatchedLostPostId] = useState<string | null>(null);
+    const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showRejectedNotice, setShowRejectedNotice] = useState(false);
 
@@ -75,6 +85,9 @@ export default function HomePage() {
             setModerationNotice(false);
             setBellActive(false);
             setIsScanning(false);
+            setMatches([]);
+            setPendingMatchRequestId(null);
+            setMatchedLostPostId(null);
             return;
         }
 
@@ -82,9 +95,10 @@ export default function HomePage() {
 
         const restoreAiState = async () => {
             try {
-                const [myPostsResult, scanState] = await Promise.all([
+                const [myPostsResult, scanState, pendingResult] = await Promise.all([
                     getMyPosts(1, 50),
                     getMatchingScanState(),
+                    getPendingMatchingResult(),
                 ]);
 
                 if (cancelled) {
@@ -97,8 +111,25 @@ export default function HomePage() {
                         post.status === ProcessStatus.EMBEDDING
                 );
 
+                const hasPendingResult = pendingResult.matches.length > 0;
+
+                if (hasPendingResult) {
+                    setMatches(
+                        pendingResult.matches.map((item) => ({
+                            post: item.post,
+                            similarityScore: item.similarity_score,
+                        }))
+                    );
+                    setPendingMatchRequestId(pendingResult.request_id);
+                    setMatchedLostPostId(pendingResult.lost_post_id);
+                } else {
+                    setMatches([]);
+                    setPendingMatchRequestId(null);
+                    setMatchedLostPostId(null);
+                }
+
                 setModerationNotice(hasPendingModeration);
-                setBellActive(scanState.is_scanning);
+                setBellActive(scanState.is_scanning || hasPendingResult);
                 setIsScanning(scanState.is_scanning);
             } catch {
                 if (cancelled) {
@@ -108,6 +139,9 @@ export default function HomePage() {
                 setModerationNotice(false);
                 setBellActive(false);
                 setIsScanning(false);
+                setMatches([]);
+                setPendingMatchRequestId(null);
+                setMatchedLostPostId(null);
             }
         };
 
@@ -126,6 +160,7 @@ export default function HomePage() {
             try {
                 const payload = JSON.parse(event.data) as {
                     type?: string;
+                    eventType?: string;
                     postId?: string;
                     post?: {
                         status?: string;
@@ -134,6 +169,35 @@ export default function HomePage() {
                 };
 
                 if (payload.type === 'connected') {
+                    return;
+                }
+
+                if (payload.eventType === 'MATCHING_CANDIDATES_READY') {
+                    const matchingPayload = payload.post as {
+                        request_id?: string;
+                        lost_post_id?: string;
+                        matches?: Array<{
+                            post?: Post;
+                            similarity_score?: number;
+                        }>;
+                    };
+
+                    const incomingMatches: MatchItem[] = (matchingPayload.matches || [])
+                        .filter((item) => !!item.post)
+                        .map((item) => ({
+                            post: item.post as Post,
+                            similarityScore: item.similarity_score,
+                        }));
+
+                    if (incomingMatches.length > 0) {
+                        setMatches(incomingMatches);
+                        setPendingMatchRequestId(matchingPayload.request_id || null);
+                        setMatchedLostPostId(matchingPayload.lost_post_id || null);
+                        setShowMatchModal(true);
+                        setBellActive(true);
+                        setIsScanning(false);
+                    }
+
                     return;
                 }
 
@@ -228,7 +292,12 @@ export default function HomePage() {
 
     // 2. Logic "Cái Chuông" — Kích hoạt AI Matching
     const handleBellClick = async () => {
-        if (bellActive || isScanning) return;
+        if (matches.length > 0) {
+            setShowMatchModal(true);
+            return;
+        }
+
+        if (isScanning) return;
 
         const latestOwnLostPost = posts.find(
             (post) =>
@@ -275,16 +344,34 @@ export default function HomePage() {
     };
 
     // 3. Xử lý Kết thúc case (Đóng bài)
-    const handleResolve = async (postId: string) => {
-        if (window.confirm('Xác nhận bạn đã nhận lại được đồ? Hệ thống sẽ ẩn bài viết và đóng case.')) {
-            try {
-                await resolvePost(postId);
-                setBellActive(false);
-                setShowMatchModal(false);
-                alert('Chúc mừng bạn! Case đã đóng.');
-            } catch {
-                alert('Lỗi khi đóng bài. Vui lòng thử lại.');
+    const handleResolve = async (foundPostId: string) => {
+        try {
+            if (pendingMatchRequestId) {
+                await confirmMatchingCandidate(pendingMatchRequestId, foundPostId);
             }
+
+            if (matchedLostPostId) {
+                await resolvePost(matchedLostPostId);
+            }
+
+            setHiddenPostIds((prev) => {
+                const next = new Set(prev);
+                next.add(foundPostId);
+                if (matchedLostPostId) {
+                    next.add(matchedLostPostId);
+                }
+                return next;
+            });
+
+            setBellActive(false);
+            setIsScanning(false);
+            setShowMatchModal(false);
+            setMatches([]);
+            setPendingMatchRequestId(null);
+            setMatchedLostPostId(null);
+            alert('Đã xác nhận. Hai bài viết liên quan đã được ẩn khỏi giao diện của bạn.');
+        } catch {
+            alert('Lỗi khi xác nhận. Vui lòng thử lại.');
         }
     };
 
@@ -411,7 +498,7 @@ export default function HomePage() {
                                 </div>
                             ) : (
                                 <>
-                                    {posts.map((post) => (
+                                    {posts.filter((post) => !hiddenPostIds.has(post.id)).map((post) => (
                                         <PostItem
                                             key={post.id}
                                             post={post}
@@ -455,6 +542,7 @@ export default function HomePage() {
                         activeTab={activeTab}
                         bellActive={bellActive}
                         isScanning={isScanning}
+                        pendingResultCount={matches.length}
                         handleBellClick={handleBellClick}
                     />
                 }

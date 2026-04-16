@@ -4,6 +4,10 @@ export const createMatchRequestSchema = z.object({
   lost_post_id: z.string().uuid('lost_post_id không hợp lệ'),
 });
 
+export const confirmMatchCandidateSchema = z.object({
+  found_post_id: z.string().uuid('found_post_id không hợp lệ'),
+});
+
 export const aiMatchingRequestSchema = z.object({
   request_id: z.string().uuid('request_id không hợp lệ'),
   lost_post_id: z.string().uuid('lost_post_id không hợp lệ'),
@@ -51,6 +55,7 @@ export const aiMatchingCallbackSchema = z
   });
 
 export type CreateMatchRequestDTO = z.infer<typeof createMatchRequestSchema>;
+export type ConfirmMatchCandidateDTO = z.infer<typeof confirmMatchCandidateSchema>;
 export type AiMatchingRequestDTO = z.infer<typeof aiMatchingRequestSchema>;
 export type AiMatchingResponseDTO = z.infer<typeof aiMatchingResponseSchema>;
 export type AiMatchingCallbackDTO = z.infer<typeof aiMatchingCallbackSchema>;

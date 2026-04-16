@@ -2,9 +2,58 @@ import { Request, Response } from 'express';
 import { asyncHandler, AppError } from '@/utils/error.response';
 import { ApiResponse } from '@/constants/api.type';
 import { matchingService } from '@/modules/posting/services/matching.service';
-import { CreateMatchRequestDTO } from '@/modules/posting/matching.schema';
+import { ConfirmMatchCandidateDTO, CreateMatchRequestDTO } from '@/modules/posting/matching.schema';
 
 class MatchingController {
+  getLatestPendingResult = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new AppError(401, 'Unauthorized');
+
+    const result = await matchingService.getLatestPendingResult(userId);
+
+    const response: ApiResponse<{
+      request_id: string | null;
+      lost_post_id: string | null;
+      total_candidates: number;
+      matches: Array<{
+        post: unknown;
+        similarity_score: number;
+      }>;
+    }> = {
+      success: true,
+      message: 'Lấy kết quả matching chờ xác nhận thành công',
+      data: {
+        request_id: result?.requestId || null,
+        lost_post_id: result?.lostPostId || null,
+        total_candidates: result?.totalCandidates || 0,
+        matches: result?.matches || [],
+      },
+    };
+
+    res.status(200).json(response);
+  });
+
+  confirmCandidate = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) throw new AppError(401, 'Unauthorized');
+
+    const { requestId } = req.params;
+    const body = req.body as ConfirmMatchCandidateDTO;
+
+    await matchingService.confirmCandidate({
+      userId,
+      requestId,
+      foundPostId: body.found_post_id,
+    });
+
+    const response: ApiResponse<null> = {
+      success: true,
+      message: 'Đã xác nhận candidate thành công',
+    };
+
+    res.status(200).json(response);
+  });
+
   getScanState = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.userId;
     if (!userId) throw new AppError(401, 'Unauthorized');

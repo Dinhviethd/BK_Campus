@@ -9,6 +9,7 @@ import {
   aiMatchingResponseSchema,
 } from '@/modules/posting/matching.schema';
 import { MatchRequest } from '@/modules/posting/models/match_request.model';
+import { publishPostEvent } from '@/modules/realtime/post-realtime.publisher';
 
 export class MatchingService {
   async createMatchRequest(input: {
@@ -88,6 +89,31 @@ export class MatchingService {
       new Date()
     );
 
+    const foundPostIds = candidates.map((candidate) => candidate.found_post_id);
+    const foundPosts = await postRepository.findByIds(foundPostIds);
+    const foundPostMap = new Map(foundPosts.map((post) => [post.id, post]));
+
+    const matches = candidates
+      .map((candidate) => {
+        const foundPost = foundPostMap.get(candidate.found_post_id);
+        if (!foundPost) {
+          return null;
+        }
+
+        return {
+          post: foundPost,
+          similarity_score: candidate.similarity_score,
+        };
+      })
+      .filter((item): item is { post: typeof foundPosts[number]; similarity_score: number } => !!item);
+
+    await this.publishMatchingRealtimeSafely({
+      lostPostId: request.lostPost.id,
+      requestId: request.id,
+      totalCandidates: candidates.length,
+      matches,
+    });
+
     return {
       retried: false,
       request: updatedRequest,
@@ -104,6 +130,69 @@ export class MatchingService {
       isScanning: !!request,
       request,
     };
+  }
+
+  async getLatestPendingResult(userId: string): Promise<{
+    requestId: string;
+    lostPostId: string;
+    totalCandidates: number;
+    matches: Array<{ post: unknown; similarity_score: number }>;
+  } | null> {
+    const request = await matchRepository.findLatestCompletedRequestWithPendingCandidatesByUser(userId);
+    if (!request || !request.candidates || request.candidates.length === 0) {
+      return null;
+    }
+
+    const foundPostIds = request.candidates.map((candidate) => candidate.foundPost.id);
+    const foundPosts = await postRepository.findByIds(foundPostIds);
+    const foundPostMap = new Map(foundPosts.map((post) => [post.id, post]));
+
+    const matches = request.candidates
+      .map((candidate) => {
+        const foundPost = foundPostMap.get(candidate.foundPost.id);
+        if (!foundPost) {
+          return null;
+        }
+
+        return {
+          post: foundPost,
+          similarity_score: candidate.similarityScore,
+        };
+      })
+      .filter((item): item is { post: typeof foundPosts[number]; similarity_score: number } => !!item);
+
+    return {
+      requestId: request.id,
+      lostPostId: request.lostPost.id,
+      totalCandidates: matches.length,
+      matches,
+    };
+  }
+
+  async confirmCandidate(input: {
+    userId: string;
+    requestId: string;
+    foundPostId: string;
+  }): Promise<void> {
+    const request = await matchRepository.findRequestById(input.requestId);
+    if (!request) {
+      throw new AppError(404, 'Match request không tồn tại');
+    }
+
+    if (String(request.user.idUser) !== String(input.userId)) {
+      throw new AppError(403, 'Bạn không có quyền xác nhận kết quả matching này');
+    }
+
+    if (request.status !== match_request_status.completed) {
+      throw new AppError(400, 'Match request chưa hoàn tất, không thể xác nhận');
+    }
+
+    const candidate = await matchRepository.findPendingCandidate(input.requestId, input.foundPostId);
+    if (!candidate) {
+      throw new AppError(404, 'Candidate không tồn tại hoặc đã được xác nhận trước đó');
+    }
+
+    await matchRepository.confirmCandidateSelection(input.requestId, input.foundPostId);
   }
 
   private async dispatchMatchingRequest(input: {
@@ -159,6 +248,32 @@ export class MatchingService {
     } catch (error) {
       const action = input.isRetry ? 'retry' : 'request';
       throw new AppError(502, `Không thể gửi ${action} tới AI matching service`);
+    }
+  }
+
+  private async publishMatchingRealtimeSafely(input: {
+    lostPostId: string;
+    requestId: string;
+    totalCandidates: number;
+    matches: Array<{ post: unknown; similarity_score: number }>;
+  }): Promise<void> {
+    try {
+      await publishPostEvent({
+        postId: input.lostPostId,
+        eventType: 'MATCHING_CANDIDATES_READY',
+        post: {
+          request_id: input.requestId,
+          lost_post_id: input.lostPostId,
+          total_candidates: input.totalCandidates,
+          matches: input.matches,
+        },
+      });
+    } catch (error) {
+      console.error('[Realtime] Failed to publish matching event', {
+        requestId: input.requestId,
+        lostPostId: input.lostPostId,
+        error,
+      });
     }
   }
 }

@@ -206,7 +206,7 @@ export const usePostStore = create<PostState>((set, get) => ({
 
   resolvePost: async (id: string) => {
     try {
-      await postApi.updatePostStatus(id, 'closed');
+      await postApi.updatePostStatus(id, ProcessStatus.CLOSED);
       set((state) => ({
         posts: state.posts.filter((p) => p.id !== id),
         total: state.total - 1,

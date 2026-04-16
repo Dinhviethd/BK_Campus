@@ -4,6 +4,7 @@ interface RightSidebarProps {
     activeTab: string;
     bellActive: boolean;
     isScanning: boolean;
+    pendingResultCount: number;
     handleBellClick: () => void;
 }
 
@@ -14,7 +15,9 @@ const StatRow = ({ label, value, color }: any) => (
     </div>
 );
 
-export const RightSidebar = ({ activeTab, bellActive, isScanning, handleBellClick }: RightSidebarProps) => {
+export const RightSidebar = ({ activeTab, bellActive, isScanning, pendingResultCount, handleBellClick }: RightSidebarProps) => {
+    const hasPendingResult = pendingResultCount > 0;
+
     return (
         <div className="space-y-6">
             {activeTab === 'LOST' && (
@@ -27,13 +30,31 @@ export const RightSidebar = ({ activeTab, bellActive, isScanning, handleBellClic
                         {bellActive ? (
                             <div className="space-y-3">
                                 <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto relative">
-                                    <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                                    {isScanning ? (
+                                        <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                                    ) : (
+                                        <Bell className="w-8 h-8 text-green-600" />
+                                    )}
                                     {isScanning && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-green-700">Đang theo dõi 24/7</p>
-                                    <p className="text-xs text-gray-500 mt-1">Hệ thống đang quét các group Facebook và bài đăng mới...</p>
+                                    <p className="font-bold text-green-700">
+                                        {isScanning ? 'Đang theo dõi 24/7' : 'Đã có kết quả AI'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {isScanning
+                                            ? 'Hệ thống đang quét các group Facebook và bài đăng mới...'
+                                            : `Bạn có ${pendingResultCount} kết quả chờ xác nhận.`}
+                                    </p>
                                 </div>
+                                {hasPendingResult && (
+                                    <button
+                                        onClick={handleBellClick}
+                                        className="w-full py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform"
+                                    >
+                                        Xem kết quả AI
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <div className="space-y-3">

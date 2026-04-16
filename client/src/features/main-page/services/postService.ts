@@ -26,12 +26,22 @@ export interface MatchingScanStateResponse {
   status: string | null;
 }
 
+export interface MatchingPendingResultResponse {
+  request_id: string | null;
+  lost_post_id: string | null;
+  total_candidates: number;
+  matches: Array<{
+    post: Post;
+    similarity_score: number;
+  }>;
+}
+
 export interface PostRealtimeEvent {
   postId: string;
   channel: string;
   eventType: string;
   occurredAt: string;
-  post: Post;
+  post: unknown;
 }
 
 // ==================== GET ====================
@@ -122,6 +132,17 @@ export const triggerAiMatching = async (lostPostId: string) => {
 export const getMatchingScanState = async () => {
   const { data } = await api.get<ApiResponse<MatchingScanStateResponse>>('/matching/match-requests/scan-state');
   return data.data!;
+};
+
+export const getPendingMatchingResult = async () => {
+  const { data } = await api.get<ApiResponse<MatchingPendingResultResponse>>('/matching/match-requests/pending-result');
+  return data.data!;
+};
+
+export const confirmMatchingCandidate = async (requestId: string, foundPostId: string) => {
+  await api.post(`/matching/match-requests/${requestId}/confirm-candidate`, {
+    found_post_id: foundPostId,
+  });
 };
 
 export const createPostRealtimeEventSource = (postId?: string) => {
