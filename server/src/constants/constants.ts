@@ -1,21 +1,45 @@
-export enum TypeVisibility {
-  WORKSPACE = 'workspace',
-  PRIVATE = 'private',
-  PUBLIC = 'public',
+export enum userRole{
+    ADMIN = 'admin',
+    USER = 'user'
+}
+export enum location {
+    khuA= 'Khu A',
+    khuB= 'Khu B',
+    khuC= 'Khu C',
+    khuD= 'Khu D',
+    khuE= 'Khu E',
+    khuF= 'Khu F',
+    khuH="Khu H",
+    thuVien= 'Thư Viện',
+    nhaXeF= 'Nhà Xe Khu F',
+    nhaXeE= 'Nhà Xe Khu E',
+    sanTheDuc= 'Sân Thể Dục',
+}
+export enum post_source {
+    webUser= "WEB_USER",
+    facebook = "FACEBOOK_CRAWL"
+}
+export enum post_type{
+    lost= 'LOST',
+    found= 'FOUND'
+}
+export enum process_status {
+    ingested= 'INGESTED',
+    moderating='MODERATING',
+    embedding= 'EMBEDDING',
+    rejected= 'REJECTED',
+    closed= 'CLOSED',
+    active='ACTIVE'
 }
 
-export enum TierWorkspace {
-  FREE = 'free',
-  STANDARD = 'standard',
-  PREMIUM = 'premium',
-  ENTERPRISE = 'enterpise',
+export enum candidate_status {
+    pending = 'PENDING',
+    accepted = 'ACCEPTED',
+    rejected = 'REJECTED'
 }
 
-export enum Visibility {
-  PRIVATE = 'private',
-  PUBLIC = 'public',
-}
-export enum RoleScope {
-  WORKSPACE = 'workspace',
-  BOARD = 'board',
+export enum match_request_status {
+    scanning = 'SCANNING',
+    completed = 'COMPLETED',
+    cancelled = 'CANCELLED'
 }

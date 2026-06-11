@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn } from 'typeorm';
 import { User } from './user.model';
+
 @Entity('notifications')
 export class Notification {
-  @PrimaryGeneratedColumn()
-  idNotification!: number;
+  @PrimaryGeneratedColumn('uuid') 
+  id!: string;
 
   @Column()
   content!: string;
@@ -15,6 +16,6 @@ export class Notification {
   readAt?: Date;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
+  @JoinColumn({ name: 'userId' })
   user!: User;
 }

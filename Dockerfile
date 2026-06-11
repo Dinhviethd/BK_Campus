@@ -1,5 +1,5 @@
 # --- Giai đoạn 1: Build Frontend (Client) ---
-FROM node:20-alpine AS client-builder
+FROM node:20-slim AS client-builder
 WORKDIR /app/client
 
 # Copy file package của client để cài library trước (tận dụng cache)
@@ -13,7 +13,7 @@ RUN npm run build
 
 
 # --- Giai đoạn 2: Build Backend (Server) ---
-FROM node:20-alpine AS server-builder
+FROM node:20-slim AS server-builder
 WORKDIR /app/server
 
 # Copy file package của server
@@ -27,16 +27,13 @@ RUN npm run build
 
 
 # --- Giai đoạn 3: Đóng gói Final Image ---
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
 
 # 1. Copy code Server đã build và các thư viện cần thiết
 COPY --from=server-builder /app/server/package*.json ./
 COPY --from=server-builder /app/server/node_modules ./node_modules
 COPY --from=server-builder /app/server/dist ./dist
-COPY --from=server-builder /app/server/tsconfig.json ./
-
-RUN sed -i 's|"baseUrl": "./src"|"baseUrl": "./dist"|g' tsconfig.json
 # 2. Copy code Frontend đã build vào thư mục 'public'
 # Lưu ý: Lúc này cấu trúc trong container sẽ là /app/dist (code server) và /app/public (code frontend)
 COPY --from=client-builder /app/client/dist ./public
@@ -47,4 +44,6 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Chạy server
-CMD ["node", "-r", "tsconfig-paths/register", "dist/main.js"]
+CMD ["node", "dist/main.js"]
+
+

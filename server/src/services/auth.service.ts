@@ -35,7 +35,6 @@ export class AuthService {
       email,
       password: hashedPassword,
       phone,
-      emailVerified: false,
     });
 
     
@@ -80,7 +79,7 @@ export class AuthService {
         throw new Error('JWT_REFRESH_SECRET is not defined');
       }
 
-      const decoded = jwt.verify(refreshToken, secret) as { userId: number };
+      const decoded = jwt.verify(refreshToken, secret) as { userId: string };
       
       
       const user = await this.userRepo.findById(decoded.userId);
@@ -99,7 +98,7 @@ export class AuthService {
   }
 
   
-  async getCurrentUser(userId: number): Promise<UserDTO> {
+  async getCurrentUser(userId: string): Promise<UserDTO> {
     const user = await this.userRepo.findById(userId);
     if (!user) {
       throw new AppError(404, 'User không tồn tại');
@@ -107,7 +106,7 @@ export class AuthService {
     return this.toUserDTO(user);
   }
 
-  async logout(userId: number): Promise<void> {
+  async logout(userId: string): Promise<void> {
     // Có thể thêm logic để invalidate token ở đây
   }
 
@@ -199,7 +198,7 @@ export class AuthService {
   }
 
   
-  private generateTokens(userId: number): { accessToken: string; refreshToken: string } {
+  private generateTokens(userId: string): { accessToken: string; refreshToken: string } {
     const accessSecret = process.env.JWT_ACCESS_SECRET;
     const refreshSecret = process.env.JWT_REFRESH_SECRET;
 
