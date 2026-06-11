@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendOTPEmail = async (email: string, otp: string): Promise<void> => {
   const mailOptions = {
-    from: `"SGroup Trello" <${process.env.EMAIL_USER}>`,
+    from: `"BK Campus" <${process.env.EMAIL_USER}>`,
     to: email,
     subject: 'Mã xác nhận đặt lại mật khẩu',
     html: `
@@ -24,7 +24,6 @@ export const sendOTPEmail = async (email: string, otp: string): Promise<void> =>
         <p style="color: #666; font-size: 14px;">Mã này sẽ hết hạn sau <strong>5 phút</strong>.</p>
         <p style="color: #666; font-size: 14px;">Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #999; font-size: 12px; text-align: center;">© 2026 SGroup Trello. All rights reserved.</p>
       </div>
     `,
   };
