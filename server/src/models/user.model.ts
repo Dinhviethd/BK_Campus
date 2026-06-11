@@ -1,9 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, OneToMany, UpdateDateColumn } from 'typeorm';
 import { Notification } from './notification.model';
+import  { userRole } from '../constants/constants';
+import { Post } from './post.model';
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  idUser!: number;
+  @PrimaryGeneratedColumn('uuid') 
+  idUser!: string;
 
   @Column()
   name!: string;
@@ -31,7 +33,14 @@ export class User {
 
   @CreateDateColumn()
   createdAt!: Date;
+  
 
   @OneToMany(() => Notification, n => n.user)
   notifications!: Notification[];
+
+  @Column({ type: 'enum', enum: userRole, default: userRole.USER })
+  role!: userRole;
+
+  @OneToMany(() => Post, post => post.user)
+  posts!: Post[];
 }
