@@ -9,6 +9,7 @@ export enum location {
     khuD= 'Khu D',
     khuE= 'Khu E',
     khuF= 'Khu F',
+    khuH="Khu H",
     thuVien= 'Thư Viện',
     nhaXeF= 'Nhà Xe Khu F',
     nhaXeE= 'Nhà Xe Khu E',
@@ -19,12 +20,26 @@ export enum post_source {
     facebook = "FACEBOOK_CRAWL"
 }
 export enum post_type{
-    lost= 'lost',
-    found= 'found'
+    lost= 'LOST',
+    found= 'FOUND'
 }
 export enum process_status {
-    processing= 'processing',
-    rejected= 'rejected',
-    closed= 'closed',
-    active='active'
+    ingested= 'INGESTED',
+    moderating='MODERATING',
+    embedding= 'EMBEDDING',
+    rejected= 'REJECTED',
+    closed= 'CLOSED',
+    active='ACTIVE'
+}
+
+export enum candidate_status {
+    pending = 'PENDING',
+    accepted = 'ACCEPTED',
+    rejected = 'REJECTED'
+}
+
+export enum match_request_status {
+    scanning = 'SCANNING',
+    completed = 'COMPLETED',
+    cancelled = 'CANCELLED'
 }

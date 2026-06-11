@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { AppError } from "@/utils/error.response";
 import { AppDataSource } from "@/configs/database.config";
-import { User } from "@/models/user.model";
+import { User } from "@/modules/auth/models/user.model";
 import dotenv from "dotenv"
-dotenv.config()
+dotenv.config({ quiet: true })
 interface JwtPayload {
   userId: string;
 }

@@ -1,58 +1,73 @@
-import { Loader2, Bell } from 'lucide-react';
+import { Bell, Loader2 } from "lucide-react";
+import StatsSidebar from "@/features/main-page/components/StatsSidebar";
 
 interface RightSidebarProps {
-    activeTab: string;
-    bellActive: boolean;
-    isScanning: boolean;
-    handleBellClick: () => void;
+	activeTab: string;
+	bellActive: boolean;
+	isScanning: boolean;
+	pendingResultCount: number;
+	handleBellClick: () => void;
 }
 
-const StatRow = ({ label, value, color }: any) => (
-    <div className="flex justify-between items-center text-sm">
-        <span className="text-gray-500">{label}</span>
-        <span className={`font-bold ${color}`}>{value}</span>
-    </div>
-);
+export default function RightSidebar({
+	activeTab,
+	bellActive,
+	isScanning,
+	pendingResultCount,
+	handleBellClick,
+}: RightSidebarProps) {
+	const hasPendingResult = pendingResultCount > 0;
+	const description = !bellActive
+		? "Kích hoạt để AI tự động so khớp đồ mất của bạn với dữ liệu tìm thấy."
+		: isScanning
+			? "Hệ thống đang quét các group Facebook và bài đăng mới..."
+			: hasPendingResult
+				? `Bạn có ${pendingResultCount} kết quả chờ xác nhận.`
+				: "Hệ thống đang theo dõi các bài đăng mới cho bạn.";
 
-export const RightSidebar = ({ activeTab, bellActive, isScanning, handleBellClick }: RightSidebarProps) => {
-    return (
-        <div className="space-y-6 sticky top-24 h-fit">
-            {activeTab === 'lost' && (
-                <div className={`rounded-xl border p-5 transition-all duration-300 ${bellActive ? 'bg-white border-green-500 shadow-green-100 shadow-lg' : 'bg-white border-gray-200 shadow-sm'}`}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-gray-800">Trạng thái AI</h3>
-                        <span className={`w-3 h-3 rounded-full ${bellActive ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
-                    </div>
-                    <div className="text-center">
-                        {bellActive ? (
-                            <div className="space-y-3">
-                                <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto relative">
-                                    <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
-                                    {isScanning && <span className="absolute -top-1 -right-1 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span></span>}
-                                </div>
-                                <div>
-                                    <p className="font-bold text-green-700">Đang theo dõi 24/7</p>
-                                    <p className="text-xs text-gray-500 mt-1">Hệ thống đang quét các group Facebook và bài đăng mới...</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto text-indigo-600"><Bell size={32} /></div>
-                                <p className="text-xs text-gray-500">Kích hoạt để AI tự động so khớp đồ mất của bạn với dữ liệu tìm thấy.</p>
-                                <button onClick={handleBellClick} className="w-full py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform">Bật AI Tìm kiếm</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <h4 className="text-xs font-bold text-gray-400 uppercase mb-3">Thống kê hôm nay</h4>
-                <div className="space-y-3">
-                    <StatRow label="Bài viết mới" value="124" color="text-blue-600" />
-                    <StatRow label="Đã tìm thấy" value="18" color="text-green-600" />
-                    <StatRow label="Crawl từ FB" value="89" color="text-indigo-600" />
-                </div>
-            </div>
-        </div>
-    );
-};
+	return (
+		<div className="space-y-4">
+			{activeTab === "LOST" && (
+				<section className="rounded-3xl border border-[#1f5ca0] bg-gradient-to-br from-[#0b4f9e] via-[#0b4a94] to-[#093e7e] p-5 text-white shadow-[0_10px_24px_rgba(11,79,158,0.25)]">
+					<div className="flex flex-col items-center text-center">
+						<p className="text-lg font-semibold">Trạng thái AI</p>
+						<span className="mt-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/12 text-white ring-1 ring-white/15">
+							{bellActive && isScanning ? <Loader2 className="h-8 w-8 animate-spin" /> : <Bell className="h-8 w-8" />}
+						</span>
+					</div>
+
+					<div className="mt-4 rounded-xl border border-white/10 bg-[#2a67ac]/70 px-3 py-2">
+						<div className="flex items-center justify-between gap-3 text-sm font-medium">
+							<span>Tự động quét tin mới</span>
+							<button
+								type="button"
+								onClick={handleBellClick}
+								className={`relative h-6 w-11 rounded-full transition-colors ${bellActive ? "bg-emerald-400/90" : "bg-white/45"}`}
+							>
+								<span
+									className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${
+										bellActive ? "right-1" : "left-1"
+									}`}
+								/>
+							</button>
+						</div>
+					</div>
+
+					<p className="mt-4 text-sm leading-6 text-[#d6e8ff]">{description}</p>
+
+					{bellActive && !isScanning && hasPendingResult && (
+						<button
+							type="button"
+							onClick={handleBellClick}
+							className="mt-4 w-full rounded-xl bg-green-500 py-3 font-bold text-white shadow-lg hover:bg-green-600"
+						>
+							Xem {pendingResultCount} kết quả AI
+						</button>
+					)}
+				</section>
+			)}
+
+			<StatsSidebar />
+		</div>
+	);
+}

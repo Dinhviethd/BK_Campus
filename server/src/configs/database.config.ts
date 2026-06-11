@@ -9,7 +9,7 @@ export const AppDataSource = new DataSource({
 
   ssl: { rejectUnauthorized: false },
 
-  entities: [__dirname + "/../models/*.{ts,js}"],
+  entities: [__dirname + "/../modules/**/models/*.model.{ts,js}"],
   migrations: [__dirname + "/../migrations/*.{ts,js}"],
   synchronize: false,
 });
@@ -18,14 +18,14 @@ export const AppDataSource = new DataSource({
 export const initDatabase = async () => {
   try {
     await AppDataSource.initialize();
-    console.log("✅ Connected to Supabase (Postgres)");
+    console.log("Connected to Supabase (Postgres)");
 
     const migrations = await AppDataSource.runMigrations();
     if (migrations.length > 0) {
-      console.log(`✅ Executed ${migrations.length} migration(s)`);
+      console.log(`Executed ${migrations.length} migration(s)`);
     }
   } catch (error) {
-    console.error("❌ Failed to connect to Supabase");
+    console.error("Failed to connect to Supabase");
     console.error(error);
     process.exit(1);
   }

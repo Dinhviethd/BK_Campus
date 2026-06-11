@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/features/auth/stores/authStore"
 import { authService } from "@/features/auth/services/authService"
 import { useNavigate } from "react-router-dom"
+import { Bell, Settings } from "lucide-react"
 
 // Simple logo component for the navbar
 const Logo = () => {
@@ -79,8 +80,7 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 // Default navigation links
 const defaultNavigationLinks: NavbarNavLink[] = [
   { href: "#", label: "Trang chủ", active: true },
-  { href: "#mypost", label: "Bài của tôi" },
-  { href: "#notification", label: "Thông báo" },
+  { href: "#map", label: "Bài của tôi" },
 ]
 
 export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
@@ -141,13 +141,13 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
     return (
       <header
         className={cn(
-          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-8 md:px-12 lg:px-24 [&_*]:no-underline",
+          "sticky top-0 z-50 w-full border-b border-[#e6ebf4] bg-[#f8f9fd] px-4 md:px-8 [&_*]:no-underline",
           className,
         )}
         ref={combinedRef}
         {...(props as any)}
       >
-        <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-4">
+        <div className="mx-auto flex h-16 w-full max-w-[1420px] items-center justify-between gap-4">
           {/* Left side */}
           <div className="flex items-center gap-2">
             {/* Mobile menu trigger */}
@@ -187,7 +187,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               </Popover>
             )}
             {/* Main nav */}
-            <div className="flex items-center gap-6 ">
+            <div className="flex items-center gap-4">
               <button
                 type="button"
                 className="flex items-center text-primary hover:text-primary/90 transition-colors cursor-pointer"
@@ -205,10 +205,10 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                         <button
                           type="button"
                           className={cn(
-                            "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
+                            "group inline-flex h-10 w-max items-center justify-center border-b-2 border-transparent px-4 py-2 text-sm font-medium transition-colors hover:text-slate-700 focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
                             link.active
-                              ? "bg-accent text-accent-foreground"
-                              : "text-foreground/80 hover:text-foreground",
+                              ? "border-[#2d63d7] text-[#2d63d7]"
+                              : "text-slate-500",
                           )}
                           onClick={e => e.preventDefault()}
                         >
@@ -221,8 +221,23 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               )}
             </div>
           </div>
+
+        
+
           {/* Right side */}
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="hidden h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#e8edf7] hover:text-slate-700 lg:inline-flex"
+            >
+              <Bell className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="hidden h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-[#e8edf7] hover:text-slate-700 lg:inline-flex"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
             {isAuthenticated && user ? (
               <Popover>
                 <PopoverTrigger asChild>

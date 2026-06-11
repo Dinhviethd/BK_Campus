@@ -1,45 +1,74 @@
 
-import {App} from "./App";
-import AuthLayout from "@/features/auth/layouts/AuthLayout";
-import { LoginForm } from "@/features/auth/components/Login"
-import {SignupForm} from '@/features/auth/components/Register'
-import ResetPassword from '@/features/auth/components/ResetPassword'
-import MainLayout from '@/components/shared/MainLayout'
-import HomePage from '@/features/main-page/pages/MainPage'
-import { ProtectedRoute, PublicRoute } from '@/features/auth/components/ProtectedRoute'
-
 const routes = [
   {
     path: "/",
-    Component: App,
+    lazy: async () => {
+      const { App } = await import("./App");
+      return { Component: App };
+    },
     children: [
       {
         path: "/",
-        Component: ProtectedRoute, 
+        lazy: async () => {
+          const { ProtectedRoute } = await import("@/features/auth/components/ProtectedRoute");
+          return { Component: ProtectedRoute };
+        },
         children: [
           {
-            Component: MainLayout,
+            lazy: async () => {
+              const { default: MainLayout } = await import("@/components/shared/MainLayout");
+              return { Component: MainLayout };
+            },
             children: [
-              { path: "", Component: HomePage },
+              {
+                path: "",
+                lazy: async () => {
+                  const { default: HomePage } = await import("@/features/main-page/pages/MainPage");
+                  return { Component: HomePage };
+                },
+              },
             ],
           },
         ],
       },
       {
         path: "auth",
-        Component: PublicRoute, 
+        lazy: async () => {
+          const { PublicRoute } = await import("@/features/auth/components/ProtectedRoute");
+          return { Component: PublicRoute };
+        },
         children: [
           {
-            Component: AuthLayout,
+            lazy: async () => {
+              const { default: AuthLayout } = await import("@/features/auth/layouts/AuthLayout");
+              return { Component: AuthLayout };
+            },
             children: [
-              { path: "login", Component: LoginForm },
-              { path: "register", Component: SignupForm },
-              { path: "reset-password", Component: ResetPassword },
+              {
+                path: "login",
+                lazy: async () => {
+                  const { LoginForm } = await import("@/features/auth/components/Login");
+                  return { Component: LoginForm };
+                },
+              },
+              {
+                path: "register",
+                lazy: async () => {
+                  const { SignupForm } = await import("@/features/auth/components/Register");
+                  return { Component: SignupForm };
+                },
+              },
+              {
+                path: "reset-password",
+                lazy: async () => {
+                  const { default: ResetPassword } = await import("@/features/auth/components/ResetPassword");
+                  return { Component: ResetPassword };
+                },
+              },
             ],
           },
         ],
       },
-     
     ],
   },
 ];

@@ -25,7 +25,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [isAuthenticated, isAuthVerified]);
 
-  // Show loading while verifying auth with server
   if (!isAuthVerified) {
     return (
       <div className="flex items-center justify-center h-screen">

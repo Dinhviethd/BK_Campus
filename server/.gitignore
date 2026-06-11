@@ -3,3 +3,4 @@ node_modules
 upload/avatars/*
 .vscode
 migrations/*
+.env.prod

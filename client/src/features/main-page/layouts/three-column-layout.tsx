@@ -1,32 +1,17 @@
-import React from 'react';
+import type { ReactNode } from "react";
 
-interface MainPageLayoutProps {
-  leftSidebar: React.ReactNode;
-  mainContent: React.ReactNode;
-  rightSidebar: React.ReactNode;
+interface ThreeColumnLayoutProps {
+	left: ReactNode;
+	center: ReactNode;
+	right: ReactNode;
 }
 
-export const MainPageLayout = ({ leftSidebar, mainContent, rightSidebar }: MainPageLayoutProps) => {
-  return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-12 gap-6">
-          {/* Cột trái: 3 phần */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
-            {leftSidebar}
-          </div>
-
-          {/* Cột giữa: 6 phần */}
-          <div className="col-span-12 lg:col-span-6 space-y-4">
-            {mainContent}
-          </div>
-
-          {/* Cột phải: 3 phần */}
-          <div className="col-span-12 lg:col-span-3 space-y-4">
-            {rightSidebar}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+export default function ThreeColumnLayout({ left, center, right }: ThreeColumnLayoutProps) {
+	return (
+		<div className="mx-auto grid w-full max-w-[1380px] grid-cols-1 gap-5 px-4 pb-8 pt-5 md:px-6 lg:grid-cols-[310px_minmax(0,1fr)] lg:px-10 xl:grid-cols-[310px_minmax(0,1fr)_292px] xl:px-14">
+			<aside className="order-2 lg:order-1">{left}</aside>
+			<main className="order-1 lg:order-2 lg:max-w-[780px]">{center}</main>
+			<aside className="order-3 hidden xl:block">{right}</aside>
+		</div>
+	);
+}
